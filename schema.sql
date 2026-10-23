@@ -3,6 +3,10 @@
 -- Basado en DER_Vivero.drawio, con productos, plantas e insumos
 -- y servicios modelados como especialización de "producto".
 -- Las líneas marcadas con "AJUSTE" se apartan del DER original.
+--
+-- Este archivo define las tablas con sus restricciones de dominio y de
+-- entidad (PK, NOT NULL, DEFAULT, UNIQUE, CHECK). Las claves foráneas
+-- están en integridad_referencial.sql y se ejecutan después.
 -- =====================================================
 
 DROP DATABASE IF EXISTS vivero;
@@ -13,11 +17,12 @@ USE vivero;
 -- Entidades independientes
 -- -----------------------------------------------------
 
-CREATE TABLE clientes (
+CREATE TABLE cliente (
     id_cliente  INT AUTO_INCREMENT PRIMARY KEY,
     nombre      VARCHAR(50) NOT NULL,
     apellido    VARCHAR(50) NOT NULL,
-    telefono    VARCHAR(20)
+    telefono    VARCHAR(20),
+    dni         VARCHAR(15) NULL UNIQUE                -- opcional: el cliente puede no darlo
 );
 
 CREATE TABLE vendedor (
@@ -95,11 +100,7 @@ CREATE TABLE planta (
     de_interior      BOOLEAN     NOT NULL DEFAULT FALSE,
     nivel_luz        ENUM('baja', 'media', 'alta'),
     riego_cada_dias  SMALLINT,
-    CONSTRAINT chk_planta_tipo CHECK (tipo = 'planta'),
-    CONSTRAINT fk_planta_producto
-        FOREIGN KEY (id_producto, tipo) REFERENCES producto (id_producto, tipo),
-    CONSTRAINT fk_planta_tipo_planta
-        FOREIGN KEY (id_tipo_planta) REFERENCES tipo_planta (id_tipo_planta)
+    CONSTRAINT chk_planta_tipo CHECK (tipo = 'planta')
 );
 
 CREATE TABLE servicio (
@@ -108,11 +109,7 @@ CREATE TABLE servicio (
     id_tipo_servicio     INT         NOT NULL,
     duracion_estimada_min INT,
     a_domicilio          BOOLEAN     NOT NULL DEFAULT FALSE,
-    CONSTRAINT chk_servicio_tipo CHECK (tipo = 'servicio'),
-    CONSTRAINT fk_servicio_producto
-        FOREIGN KEY (id_producto, tipo) REFERENCES producto (id_producto, tipo),
-    CONSTRAINT fk_servicio_tipo_servicio
-        FOREIGN KEY (id_tipo_servicio) REFERENCES tipo_servicio (id_tipo_servicio)
+    CONSTRAINT chk_servicio_tipo CHECK (tipo = 'servicio')
 );
 
 -- -----------------------------------------------------
@@ -120,18 +117,16 @@ CREATE TABLE servicio (
 -- -----------------------------------------------------
 
 CREATE TABLE compra (
-    id_compra    INT AUTO_INCREMENT PRIMARY KEY,
-    id_proveedor INT NOT NULL,                            -- relación "provee"
-    fecha        DATE NOT NULL,
-    total        DECIMAL(12,2) NOT NULL DEFAULT 0,        -- derivado (suma de subtotales)
-    forma_pago   ENUM('efectivo','debito','credito','transferencia','billetera_virtual') NOT NULL,
-    CONSTRAINT fk_compra_proveedor
-        FOREIGN KEY (id_proveedor) REFERENCES proveedor (id_proveedor)
+    id_compra     INT AUTO_INCREMENT PRIMARY KEY,
+    id_proveedor  INT NOT NULL,                           -- relación "provee"
+    fecha         DATE NOT NULL,
+    total         DECIMAL(12,2) NOT NULL DEFAULT 0,       -- derivado (suma de subtotales)
+    forma_de_pago ENUM('efectivo','debito','credito','transferencia','billetera_virtual') NOT NULL
 );
 
 -- Relación N:M compra - producto
 -- Nota: solo se compran productos con stock (plantas e insumos), no servicios.
--- Esa regla no se puede forzar con un CHECK; se resolvería con un trigger.
+-- Esa regla no se puede forzar con un CHECK; la valida trg_detalle_compra_bi.
 CREATE TABLE detalle_compra (
     id_compra       INT NOT NULL,
     id_producto     INT NOT NULL,
@@ -139,10 +134,6 @@ CREATE TABLE detalle_compra (
     precio_unitario DECIMAL(10,2) NOT NULL,               -- AJUSTE: precio al momento de la compra
     subtotal        DECIMAL(12,2) NOT NULL DEFAULT 0,     -- derivado: lo calcula el trigger (cantidad * precio_unitario)
     PRIMARY KEY (id_compra, id_producto),
-    CONSTRAINT fk_dcompra_compra
-        FOREIGN KEY (id_compra) REFERENCES compra (id_compra),   -- AJUSTE: sin CASCADE para que los triggers revierdan stock
-    CONSTRAINT fk_dcompra_producto
-        FOREIGN KEY (id_producto) REFERENCES producto (id_producto),
     CONSTRAINT chk_dcompra_cantidad CHECK (cantidad > 0)
 );
 
@@ -152,15 +143,11 @@ CREATE TABLE detalle_compra (
 
 CREATE TABLE ticket_venta (
     id_venta        INT AUTO_INCREMENT PRIMARY KEY,
-    id_cliente      INT NOT NULL,                         -- relación "recibe"
+    id_cliente      INT NULL,                             -- relación "recibe"; NULL = consumidor final
     id_vendedor     INT NOT NULL,                         -- relación "realiza"
     fecha           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     total_facturado DECIMAL(12,2) NOT NULL DEFAULT 0,     -- derivado (suma de subtotales)
-    forma_de_pago   ENUM('efectivo','debito','credito','transferencia','billetera_virtual') NOT NULL,
-    CONSTRAINT fk_ticket_cliente
-        FOREIGN KEY (id_cliente) REFERENCES clientes (id_cliente),
-    CONSTRAINT fk_ticket_vendedor
-        FOREIGN KEY (id_vendedor) REFERENCES vendedor (id_vendedor)
+    forma_de_pago   ENUM('efectivo','debito','credito','transferencia','billetera_virtual') NOT NULL
 );
 
 -- Relación N:M ticket_venta - producto (incluye plantas, insumos y servicios)
@@ -171,9 +158,5 @@ CREATE TABLE detalle_venta (
     precio_unitario DECIMAL(10,2) NOT NULL,               -- AJUSTE: precio al momento de la venta
     subtotal        DECIMAL(12,2) NOT NULL DEFAULT 0,     -- derivado: lo calcula el trigger (cantidad * precio_unitario)
     PRIMARY KEY (id_venta, id_producto),
-    CONSTRAINT fk_dventa_venta
-        FOREIGN KEY (id_venta) REFERENCES ticket_venta (id_venta),   -- AJUSTE: sin CASCADE para que los triggers revierdan stock
-    CONSTRAINT fk_dventa_producto
-        FOREIGN KEY (id_producto) REFERENCES producto (id_producto),
     CONSTRAINT chk_dventa_cantidad CHECK (cantidad > 0)
 );

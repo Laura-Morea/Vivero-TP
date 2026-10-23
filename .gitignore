@@ -1,0 +1,7 @@
+# Se genera con armar_script_unico.sh solo para la entrega
+vivero_completo.sql
+
+# Archivos locales que no se versionan
+.~lock*#
+armar_script_unico.sh
+especificaciones_tecnicas.odt
