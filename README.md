@@ -77,7 +77,7 @@ mysql --force -u <usuario> -p < queries.sql
   unitario de ese momento. `producto.precio_compra` refleja la última compra.
 - **Stock automático.** Las compras suman y las ventas restan. No se puede vender
   sin stock, y anular una compra cuyo stock ya se vendió falla.
-- **Consumidor final.** Un ticket puede no tener cliente (`id_cliente` NULL).
+- **Consumidor final.** Una venta puede no tener cliente (`id_cliente` NULL).
 - **Sin borrado en cascada.** En MySQL las cascadas no disparan triggers, así que
   para anular una venta o una compra primero se borran sus detalles.
 
@@ -85,4 +85,4 @@ mysql --force -u <usuario> -p < queries.sql
 
 - La base no puede forzar que un producto de tipo `planta` o `servicio` tenga su
   fila en la tabla del subtipo.
-- Tampoco puede forzar que un ticket o una compra tengan al menos un detalle.
+- Tampoco puede forzar que una venta o una compra tengan al menos un detalle.

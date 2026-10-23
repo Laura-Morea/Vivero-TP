@@ -14,7 +14,7 @@ SELECT v.id_vendedor,
        COUNT(t.id_venta)                  AS cantidad_tickets,
        SUM(t.total_facturado)             AS total_facturado
   FROM vendedor v
-  JOIN ticket_venta t ON t.id_vendedor = v.id_vendedor
+  JOIN venta t ON t.id_vendedor = v.id_vendedor
  GROUP BY v.id_vendedor, v.apellido, v.nombre
  ORDER BY total_facturado DESC
  LIMIT 3;
@@ -56,7 +56,7 @@ SELECT DATE_FORMAT(fecha, '%Y-%m')     AS mes,
        COUNT(*)                        AS cantidad_tickets,
        SUM(total_facturado)            AS total_facturado,
        ROUND(AVG(total_facturado), 2)  AS ticket_promedio
-  FROM ticket_venta
+  FROM venta
  GROUP BY mes
  ORDER BY mes;
 
@@ -66,8 +66,8 @@ SELECT DATE_FORMAT(fecha, '%Y-%m')     AS mes,
 SELECT forma_de_pago,
        COUNT(*)             AS cantidad_tickets,
        SUM(total_facturado) AS total_facturado,
-       ROUND(100 * SUM(total_facturado) / (SELECT SUM(total_facturado) FROM ticket_venta), 2) AS porcentaje
-  FROM ticket_venta
+       ROUND(100 * SUM(total_facturado) / (SELECT SUM(total_facturado) FROM venta), 2) AS porcentaje
+  FROM venta
  GROUP BY forma_de_pago
  ORDER BY total_facturado DESC;
 
@@ -79,13 +79,13 @@ SELECT forma_de_pago,
         COUNT(t.id_venta)                  AS cantidad_tickets,
         SUM(t.total_facturado)             AS total_comprado
    FROM cliente c
-   JOIN ticket_venta t ON t.id_cliente = c.id_cliente
+   JOIN venta t ON t.id_cliente = c.id_cliente
   GROUP BY c.id_cliente, c.apellido, c.nombre
   ORDER BY total_comprado DESC
   LIMIT 3)
 UNION ALL
 (SELECT 'Consumidor final', COUNT(*), SUM(total_facturado)
-   FROM ticket_venta
+   FROM venta
   WHERE id_cliente IS NULL);
 
 -- -----------------------------------------------------
@@ -180,7 +180,7 @@ SELECT t.id_venta,
        dv.precio_unitario,
        dv.subtotal,
        t.total_facturado
-  FROM ticket_venta t
+  FROM venta t
   LEFT JOIN cliente c   ON c.id_cliente  = t.id_cliente
   JOIN vendedor v       ON v.id_vendedor = t.id_vendedor
   JOIN detalle_venta dv ON dv.id_venta   = t.id_venta
@@ -204,7 +204,7 @@ SELECT p.id_producto, p.nombre, p.cantidad_stock,
    AND p.cantidad_stock <> COALESCE(dc.comprado, 0) - COALESCE(dv.vendido, 0);
 
 SELECT t.id_venta, t.total_facturado, SUM(dv.subtotal) AS suma_detalles
-  FROM ticket_venta t
+  FROM venta t
   JOIN detalle_venta dv ON dv.id_venta = t.id_venta
  GROUP BY t.id_venta, t.total_facturado
 HAVING t.total_facturado <> SUM(dv.subtotal);
@@ -217,12 +217,12 @@ START TRANSACTION;
 
 SELECT nombre, cantidad_stock AS stock_antes FROM producto WHERE id_producto = 7;
 
-INSERT INTO ticket_venta (id_cliente, id_vendedor, forma_de_pago) VALUES (NULL, 1, 'efectivo');
+INSERT INTO venta (id_cliente, id_vendedor, forma_de_pago) VALUES (NULL, 1, 'efectivo');
 INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario)
 VALUES (LAST_INSERT_ID(), 7, 2, 16500.00);
 
 SELECT nombre, cantidad_stock AS stock_despues FROM producto WHERE id_producto = 7;
-SELECT id_venta, total_facturado FROM ticket_venta ORDER BY id_venta DESC LIMIT 1;
+SELECT id_venta, total_facturado FROM venta ORDER BY id_venta DESC LIMIT 1;
 
 ROLLBACK;
 
@@ -317,7 +317,7 @@ VALUES (1, 2, 0, 4800.00);
 -- N12. Forma de pago fuera de las permitidas
 --      Error esperado: 'Data truncated for column forma_de_pago' (ENUM, modo estricto)
 -- -----------------------------------------------------
-INSERT INTO ticket_venta (id_cliente, id_vendedor, forma_de_pago)
+INSERT INTO venta (id_cliente, id_vendedor, forma_de_pago)
 VALUES (1, 1, 'cheque');
 
 -- -----------------------------------------------------
@@ -328,14 +328,14 @@ INSERT INTO cliente (nombre, apellido, dni) VALUES ('Laura', 'Benítez', '324567
 
 -- -----------------------------------------------------
 -- N14. Ticket de un vendedor que no existe
---      Error esperado: FK 'fk_ticket_vendedor'
+--      Error esperado: FK 'fk_venta_vendedor'
 -- -----------------------------------------------------
-INSERT INTO ticket_venta (id_cliente, id_vendedor, forma_de_pago)
+INSERT INTO venta (id_cliente, id_vendedor, forma_de_pago)
 VALUES (1, 99, 'efectivo');
 
 -- -----------------------------------------------------
 -- N15. Borrar un cliente que tiene ventas
---      Error esperado: FK 'fk_ticket_cliente' (ON DELETE RESTRICT)
+--      Error esperado: FK 'fk_venta_cliente' (ON DELETE RESTRICT)
 -- -----------------------------------------------------
 DELETE FROM cliente WHERE id_cliente = 1;
 
@@ -343,6 +343,6 @@ DELETE FROM cliente WHERE id_cliente = 1;
 -- N16. Borrar un ticket sin borrar antes sus detalles
 --      Error esperado: FK 'fk_dventa_venta' (ON DELETE RESTRICT)
 -- -----------------------------------------------------
-DELETE FROM ticket_venta WHERE id_venta = 1;
+DELETE FROM venta WHERE id_venta = 1;
 
 ROLLBACK;

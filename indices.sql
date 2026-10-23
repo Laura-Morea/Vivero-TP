@@ -10,8 +10,8 @@
 USE vivero;
 
 -- Reportes de ventas y compras por período (ej: ventas del mes)
-CREATE INDEX idx_ticket_venta_fecha ON ticket_venta (fecha);
-CREATE INDEX idx_compra_fecha       ON compra (fecha);
+CREATE INDEX idx_venta_fecha  ON venta (fecha);
+CREATE INDEX idx_compra_fecha ON compra (fecha);
 
 -- Búsqueda de productos por nombre en el mostrador
 CREATE INDEX idx_producto_nombre ON producto (nombre);

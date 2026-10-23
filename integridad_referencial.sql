@@ -55,17 +55,17 @@ ALTER TABLE detalle_compra
 -- Circuito de venta
 -- -----------------------------------------------------
 
-ALTER TABLE ticket_venta
-    ADD CONSTRAINT fk_ticket_cliente
+ALTER TABLE venta
+    ADD CONSTRAINT fk_venta_cliente
         FOREIGN KEY (id_cliente) REFERENCES cliente (id_cliente)
         ON DELETE RESTRICT ON UPDATE RESTRICT,
-    ADD CONSTRAINT fk_ticket_vendedor
+    ADD CONSTRAINT fk_venta_vendedor
         FOREIGN KEY (id_vendedor) REFERENCES vendedor (id_vendedor)
         ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 ALTER TABLE detalle_venta
     ADD CONSTRAINT fk_dventa_venta
-        FOREIGN KEY (id_venta) REFERENCES ticket_venta (id_venta)
+        FOREIGN KEY (id_venta) REFERENCES venta (id_venta)
         ON DELETE RESTRICT ON UPDATE RESTRICT,
     ADD CONSTRAINT fk_dventa_producto
         FOREIGN KEY (id_producto) REFERENCES producto (id_producto)

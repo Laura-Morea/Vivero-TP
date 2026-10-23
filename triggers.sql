@@ -4,7 +4,7 @@
 --
 -- Qué automatizan:
 --   * subtotal de cada detalle (cantidad * precio_unitario)
---   * total de compra / total_facturado de ticket_venta
+--   * total de compra / total_facturado de venta
 --   * stock: las compras suman, las ventas restan
 --   * los servicios nunca tocan stock
 --   * las compras de servicios se rechazan
@@ -132,7 +132,7 @@ BEGIN
      WHERE id_producto = NEW.id_producto
        AND tipo <> 'servicio';
 
-    UPDATE ticket_venta
+    UPDATE venta
        SET total_facturado = (SELECT COALESCE(SUM(subtotal), 0)
                                 FROM detalle_venta WHERE id_venta = NEW.id_venta)
      WHERE id_venta = NEW.id_venta;
@@ -172,7 +172,7 @@ BEGIN
      WHERE id_producto = NEW.id_producto
        AND tipo <> 'servicio';
 
-    UPDATE ticket_venta
+    UPDATE venta
        SET total_facturado = (SELECT COALESCE(SUM(subtotal), 0)
                                 FROM detalle_venta WHERE id_venta = NEW.id_venta)
      WHERE id_venta = NEW.id_venta;
@@ -188,7 +188,7 @@ BEGIN
      WHERE id_producto = OLD.id_producto
        AND tipo <> 'servicio';
 
-    UPDATE ticket_venta
+    UPDATE venta
        SET total_facturado = (SELECT COALESCE(SUM(subtotal), 0)
                                 FROM detalle_venta WHERE id_venta = OLD.id_venta)
      WHERE id_venta = OLD.id_venta;

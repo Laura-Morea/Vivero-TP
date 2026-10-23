@@ -141,7 +141,7 @@ CREATE TABLE detalle_compra (
 -- Circuito de venta
 -- -----------------------------------------------------
 
-CREATE TABLE ticket_venta (
+CREATE TABLE venta (
     id_venta        INT AUTO_INCREMENT PRIMARY KEY,
     id_cliente      INT NULL,                             -- relación "recibe"; NULL = consumidor final
     id_vendedor     INT NOT NULL,                         -- relación "realiza"
@@ -150,7 +150,7 @@ CREATE TABLE ticket_venta (
     forma_de_pago   ENUM('efectivo','debito','credito','transferencia','billetera_virtual') NOT NULL
 );
 
--- Relación N:M ticket_venta - producto (incluye plantas, insumos y servicios)
+-- Relación N:M venta - producto (incluye plantas, insumos y servicios)
 CREATE TABLE detalle_venta (
     id_venta        INT NOT NULL,
     id_producto     INT NOT NULL,

@@ -139,7 +139,7 @@ INSERT INTO detalle_compra (id_compra, id_producto, cantidad, precio_unitario) V
 -- id_cliente NULL = consumidor final
 -- -----------------------------------------------------
 
-INSERT INTO ticket_venta (id_venta, id_cliente, id_vendedor, fecha, forma_de_pago) VALUES
+INSERT INTO venta (id_venta, id_cliente, id_vendedor, fecha, forma_de_pago) VALUES
     (1,  1,    1, '2026-08-05 10:15:00', 'efectivo'),
     (2,  NULL, 2, '2026-08-06 11:30:00', 'efectivo'),
     (3,  2,    1, '2026-08-12 17:05:00', 'debito'),
