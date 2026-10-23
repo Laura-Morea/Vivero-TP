@@ -1,6 +1,6 @@
-<mxfile host="Electron">
+<mxfile host="app.diagrams.net">
   <diagram name="Página-1" id="Antt2Lvtq9oZ_vbXUr8q">
-    <mxGraphModel dx="860" dy="529" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1484" dy="660" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -22,16 +22,21 @@
         <mxCell id="duCilvcD_45XXYMqwYU9-16" parent="duCilvcD_45XXYMqwYU9-15" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;whiteSpace=wrap;" value="&lt;div&gt;(pk) id_vendedor&lt;/div&gt;&lt;div&gt;nombre&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;/span&gt;VARCHAR(50)&lt;/div&gt;&lt;div&gt;apellido&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;VARCHAR(50)&lt;/span&gt;&lt;/div&gt;&lt;div&gt;dni&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;/span&gt;VARCHAR(12)&lt;/div&gt;&lt;div&gt;telefono1&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;VARCHAR(15)&lt;/div&gt;&lt;div&gt;telefono2&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;VARCHAR(15)&lt;/span&gt;&lt;/div&gt;&lt;div&gt;telefono3&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;VARCHAR(15)&lt;/span&gt;&lt;/div&gt;&lt;div&gt;mail&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;VARCHAR(100)&lt;/div&gt;&lt;div&gt;direccion&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;VARCHAR(100)&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
           <mxGeometry height="170" width="230" y="40" as="geometry" />
         </mxCell>
+        <mxCell id="70xsZ2H3TNLMw8Q-ilXR-1" edge="1" parent="1" source="duCilvcD_45XXYMqwYU9-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.75;entryDx=0;entryDy=0;defaultLabelBackgroundColor=page;endArrow=ERoneToMany;endFill=0;exitX=-0.002;exitY=0.147;exitDx=0;exitDy=0;exitPerimeter=0;" target="duCilvcD_45XXYMqwYU9-29">
+          <mxGeometry relative="1" x="0.0854" as="geometry">
+            <mxPoint x="300" y="330" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
         <mxCell id="duCilvcD_45XXYMqwYU9-17" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" value="inventario" vertex="1">
           <mxGeometry height="160" width="210" x="300" y="260" as="geometry" />
         </mxCell>
         <mxCell id="duCilvcD_45XXYMqwYU9-18" parent="duCilvcD_45XXYMqwYU9-17" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;whiteSpace=wrap;" value="&lt;div&gt;(pk) id_inventario&lt;/div&gt;&lt;div&gt;cantidad_stock&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;INT&lt;/div&gt;&lt;div&gt;precio_compra&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;DECIMAL&lt;/div&gt;&lt;div&gt;precio_venta&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;DECIMAL&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
           <mxGeometry height="110" width="210" y="50" as="geometry" />
         </mxCell>
-        <mxCell id="duCilvcD_45XXYMqwYU9-22" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" value="venta_inventario" vertex="1">
-          <mxGeometry height="150" width="200" x="590" y="220" as="geometry" />
+        <mxCell id="duCilvcD_45XXYMqwYU9-22" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" value="detalle_venta" vertex="1">
+          <mxGeometry height="150" width="200" x="590" y="209" as="geometry" />
         </mxCell>
-        <mxCell id="duCilvcD_45XXYMqwYU9-23" parent="duCilvcD_45XXYMqwYU9-22" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;whiteSpace=wrap;" value="&lt;div&gt;(fk) id_venta&lt;/div&gt;&lt;div&gt;(fk) id_inventario&lt;/div&gt;&lt;div&gt;cantidad&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;INT&lt;/div&gt;&lt;div&gt;subtotal&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;DECIMAL&lt;/div&gt;" vertex="1">
+        <mxCell id="duCilvcD_45XXYMqwYU9-23" parent="duCilvcD_45XXYMqwYU9-22" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;whiteSpace=wrap;" value="&lt;div&gt;(pk) id_detalle_venta&lt;/div&gt;&lt;div&gt;(fk) id_venta&lt;/div&gt;&lt;div&gt;(fk) id_inventario&lt;/div&gt;&lt;div&gt;cantidad&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;INT&lt;/div&gt;&lt;div&gt;subtotal&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;DECIMAL&lt;/div&gt;" vertex="1">
           <mxGeometry height="100" width="200" y="50" as="geometry" />
         </mxCell>
         <mxCell id="duCilvcD_45XXYMqwYU9-24" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" value="planta" vertex="1">
@@ -43,13 +48,13 @@
         <mxCell id="duCilvcD_45XXYMqwYU9-26" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" value="insumo" vertex="1">
           <mxGeometry height="180" width="240" x="300" y="505" as="geometry" />
         </mxCell>
-        <mxCell id="duCilvcD_45XXYMqwYU9-27" parent="duCilvcD_45XXYMqwYU9-26" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;whiteSpace=wrap;" value="&lt;div&gt;(pk) id_insumo&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;nombre&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;VARCHAR(50)&lt;/div&gt;&lt;div&gt;tamaño&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;INT&lt;/div&gt;&lt;div&gt;descripcion1&amp;nbsp;&amp;nbsp;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;VARCHAR(100)&lt;/div&gt;&lt;div&gt;descripcion2&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;VARCHAR(100)&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;(fk) id_inventario&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+        <mxCell id="duCilvcD_45XXYMqwYU9-27" parent="duCilvcD_45XXYMqwYU9-26" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;whiteSpace=wrap;" value="&lt;div&gt;(pk) id_insumo&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;nombre&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;VARCHAR(50)&lt;/div&gt;&lt;div&gt;descripcion1&amp;nbsp;&amp;nbsp;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;VARCHAR(100)&lt;/div&gt;&lt;div&gt;descripcion2&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;VARCHAR(100)&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;(fk) id_inventario&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
           <mxGeometry height="130" width="240" y="50" as="geometry" />
         </mxCell>
-        <mxCell id="duCilvcD_45XXYMqwYU9-28" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" value="compra_inventario" vertex="1">
+        <mxCell id="duCilvcD_45XXYMqwYU9-28" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" value="detalle_compra" vertex="1">
           <mxGeometry height="150" width="220" x="10" y="300" as="geometry" />
         </mxCell>
-        <mxCell id="duCilvcD_45XXYMqwYU9-29" parent="duCilvcD_45XXYMqwYU9-28" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;whiteSpace=wrap;" value="&lt;div&gt;(pk) id_compra_inventario&amp;nbsp;&lt;/div&gt;&lt;div&gt;cantidad&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;INT&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;subtotal&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;INT&lt;/div&gt;&lt;div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;(fk) id_inventario&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;(fk) id_compra&lt;/div&gt;&lt;/div&gt;" vertex="1">
+        <mxCell id="duCilvcD_45XXYMqwYU9-29" parent="duCilvcD_45XXYMqwYU9-28" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;whiteSpace=wrap;" value="&lt;div&gt;(pk) id_detalle_compra&amp;nbsp;&lt;/div&gt;&lt;div&gt;cantidad&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;INT&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;subtotal&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;DECIMAL&lt;/div&gt;&lt;div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;(fk) id_inventario&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;(fk) id_compra&lt;/div&gt;&lt;/div&gt;" vertex="1">
           <mxGeometry height="100" width="220" y="50" as="geometry" />
         </mxCell>
         <mxCell id="duCilvcD_45XXYMqwYU9-30" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" value="compra" vertex="1">
@@ -76,16 +81,16 @@
             <mxPoint x="570" y="90" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="duCilvcD_45XXYMqwYU9-40" edge="1" parent="1" source="duCilvcD_45XXYMqwYU9-11" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERoneToMany;endFill=1;rounded=0;entryX=0;entryY=0.1;entryDx=0;entryDy=0;entryPerimeter=0;exitX=1;exitY=0.1;exitDx=0;exitDy=0;exitPerimeter=0;" target="duCilvcD_45XXYMqwYU9-23" value="">
-          <mxGeometry height="100" relative="1" width="100" as="geometry">
+        <mxCell id="duCilvcD_45XXYMqwYU9-40" edge="1" parent="1" source="duCilvcD_45XXYMqwYU9-11" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERoneToMany;endFill=1;rounded=0;exitX=1;exitY=0.1;exitDx=0;exitDy=0;exitPerimeter=0;" value="">
+          <mxGeometry height="100" relative="1" width="100" x="-0.0756" as="geometry">
             <mxPoint x="370" y="330" as="sourcePoint" />
-            <mxPoint x="470" y="230" as="targetPoint" />
+            <mxPoint x="590" y="290" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="duCilvcD_45XXYMqwYU9-41" edge="1" parent="1" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERoneToMany;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="duCilvcD_45XXYMqwYU9-22" value="">
-          <mxGeometry height="100" relative="1" width="100" as="geometry">
+        <mxCell id="duCilvcD_45XXYMqwYU9-41" edge="1" parent="1" source="duCilvcD_45XXYMqwYU9-18" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERoneToMany;rounded=0;endFill=0;exitX=1.029;exitY=0.087;exitDx=0;exitDy=0;exitPerimeter=0;" value="">
+          <mxGeometry height="100" relative="1" width="100" x="0.3933" as="geometry">
             <mxPoint x="540" y="320" as="sourcePoint" />
-            <mxPoint x="470" y="230" as="targetPoint" />
+            <mxPoint x="590" y="302" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="duCilvcD_45XXYMqwYU9-43" edge="1" parent="1" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERoneOptionalToOne;startArrow=ERoneToOne;rounded=0;entryX=-0.012;entryY=0.908;entryDx=0;entryDy=0;entryPerimeter=0;snapToPoint=1;" target="duCilvcD_45XXYMqwYU9-25" value="">
@@ -94,28 +99,25 @@
             <mxPoint x="470" y="430" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="duCilvcD_45XXYMqwYU9-46" edge="1" parent="1" source="duCilvcD_45XXYMqwYU9-29" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;startArrow=ERoneToMany;endArrow=ERmanyToOne;rounded=0;exitX=1;exitY=0.07;exitDx=0;exitDy=0;exitPerimeter=0;entryX=-0.012;entryY=0.107;entryDx=0;entryDy=0;entryPerimeter=0;" target="duCilvcD_45XXYMqwYU9-18" value="">
-          <mxGeometry height="100" relative="1" width="100" as="geometry">
-            <mxPoint x="209.99999999999991" y="355" as="sourcePoint" />
-            <mxPoint x="296.96" y="324" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="duCilvcD_45XXYMqwYU9-48" edge="1" parent="1" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERoneToMany;rounded=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" target="duCilvcD_45XXYMqwYU9-29" value="">
-          <mxGeometry height="100" relative="1" width="100" as="geometry">
-            <mxPoint x="240" y="585" as="sourcePoint" />
-            <mxPoint x="260" y="380" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
         <mxCell id="duCilvcD_45XXYMqwYU9-52" edge="1" parent="1" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;startArrow=ERoneOptionalToOne;endArrow=ERoneToOne;rounded=0;entryX=1;entryY=0.079;entryDx=0;entryDy=0;entryPerimeter=0;" target="duCilvcD_45XXYMqwYU9-18" value="">
           <mxGeometry height="100" relative="1" width="100" as="geometry">
             <mxPoint x="540" y="650" as="sourcePoint" />
             <mxPoint x="550" y="390" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="duCilvcD_45XXYMqwYU9-53" edge="1" parent="1" source="duCilvcD_45XXYMqwYU9-31" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;startArrow=ERoneToMany;endArrow=ERmanyToOne;rounded=0;exitX=1.005;exitY=0.692;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.004;entryY=0.125;entryDx=0;entryDy=0;entryPerimeter=0;" target="duCilvcD_45XXYMqwYU9-33" value="">
-          <mxGeometry height="100" relative="1" width="100" as="geometry">
-            <mxPoint x="20" y="800" as="sourcePoint" />
+        <mxCell id="duCilvcD_45XXYMqwYU9-53" edge="1" parent="1" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;startArrow=ERoneToMany;endArrow=ERmanyToOne;rounded=0;entryX=0.004;entryY=0.125;entryDx=0;entryDy=0;entryPerimeter=0;" target="duCilvcD_45XXYMqwYU9-33" value="">
+          <mxGeometry height="100" relative="1" width="100" x="0.0006" as="geometry">
+            <mxPoint x="241" y="648.04" as="sourcePoint" />
             <mxPoint x="521.89" y="789.96" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LoX5LBYRcI_Ym8Z8TorF-1" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1.001;entryY=0.888;entryDx=0;entryDy=0;entryPerimeter=0;endArrow=ERoneToMany;endFill=0;" target="duCilvcD_45XXYMqwYU9-29">
+          <mxGeometry relative="1" x="-0.0046" as="geometry">
+            <Array as="points">
+              <mxPoint x="250" y="580" />
+              <mxPoint x="250" y="438.8" />
+            </Array>
+            <mxPoint x="240" y="580" as="sourcePoint" />
           </mxGeometry>
         </mxCell>
       </root>
