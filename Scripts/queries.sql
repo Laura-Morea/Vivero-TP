@@ -2,6 +2,9 @@
 -- Consultas de prueba (testers) - MySQL 8.0.16+
 -- Ejecutar sobre la base cargada con vivero_completo.sql.
 -- Cada consulta indica qué valida o qué pregunta de negocio responde.
+--
+-- El nombre de un producto está en su subtipo (planta o insumo), por eso
+-- varias consultas hacen LEFT JOIN a ambas tablas y toman el que exista.
 -- =====================================================
 
 USE vivero;
@@ -9,51 +12,52 @@ USE vivero;
 -- -----------------------------------------------------
 -- 1. Top 3 vendedores por facturación
 -- -----------------------------------------------------
-SELECT v.id_vendedor,
-       CONCAT(v.apellido, ', ', v.nombre) AS vendedor,
-       COUNT(t.id_venta)                  AS cantidad_tickets,
-       SUM(t.total_facturado)             AS total_facturado
-  FROM vendedor v
-  JOIN venta t ON t.id_vendedor = v.id_vendedor
- GROUP BY v.id_vendedor, v.apellido, v.nombre
+SELECT ve.id_vendedor,
+       CONCAT(ve.apellido, ', ', ve.nombre) AS vendedor,
+       COUNT(v.id_venta)                    AS cantidad_ventas,
+       SUM(v.total_facturado)               AS total_facturado
+  FROM vendedor ve
+  JOIN venta v ON v.id_vendedor = ve.id_vendedor
+ GROUP BY ve.id_vendedor, ve.apellido, ve.nombre
  ORDER BY total_facturado DESC
  LIMIT 3;
 
 -- -----------------------------------------------------
--- 2. Top 3 productos más vendidos por unidades (sin servicios)
+-- 2. Top 3 productos más vendidos por unidades
 -- -----------------------------------------------------
 SELECT p.id_producto,
-       p.nombre,
-       p.tipo,
-       SUM(dv.cantidad) AS unidades_vendidas,
-       SUM(dv.subtotal) AS facturado
+       COALESCE(pl.nombre, i.nombre) AS nombre,
+       SUM(dv.cantidad)              AS unidades_vendidas,
+       SUM(dv.subtotal)              AS facturado
   FROM producto p
   JOIN detalle_venta dv ON dv.id_producto = p.id_producto
- WHERE p.tipo <> 'servicio'
- GROUP BY p.id_producto, p.nombre, p.tipo
+  LEFT JOIN planta pl   ON pl.id_producto = p.id_producto
+  LEFT JOIN insumo i    ON i.id_producto  = p.id_producto
+ GROUP BY p.id_producto, pl.nombre, i.nombre
  ORDER BY unidades_vendidas DESC
  LIMIT 3;
 
 -- -----------------------------------------------------
--- 3. Producto más facturado de cada tipo (planta, insumo, servicio)
+-- 3. Producto más facturado de cada tipo (planta, insumo)
 --    Usa una función de ventana para rankear dentro de cada tipo.
 -- -----------------------------------------------------
 SELECT tipo, nombre, facturado
-  FROM (SELECT p.tipo,
-               p.nombre,
-               SUM(dv.subtotal) AS facturado,
-               RANK() OVER (PARTITION BY p.tipo ORDER BY SUM(dv.subtotal) DESC) AS puesto
+  FROM (SELECT CASE WHEN pl.id_planta IS NOT NULL THEN 'planta' ELSE 'insumo' END AS tipo,
+               COALESCE(pl.nombre, i.nombre) AS nombre,
+               SUM(dv.subtotal)              AS facturado
           FROM producto p
           JOIN detalle_venta dv ON dv.id_producto = p.id_producto
-         GROUP BY p.id_producto, p.tipo, p.nombre) ranking
+          LEFT JOIN planta pl   ON pl.id_producto = p.id_producto
+          LEFT JOIN insumo i    ON i.id_producto  = p.id_producto
+         GROUP BY p.id_producto, pl.id_planta, pl.nombre, i.nombre) ranking
  WHERE puesto = 1
  ORDER BY facturado DESC;
 
 -- -----------------------------------------------------
--- 4. Ventas mensuales: cantidad de tickets, total y ticket promedio
+-- 4. Ventas mensuales: cantidad de ventas, total y ticket promedio (RF-05)
 -- -----------------------------------------------------
 SELECT DATE_FORMAT(fecha, '%Y-%m')     AS mes,
-       COUNT(*)                        AS cantidad_tickets,
+       COUNT(*)                        AS cantidad_ventas,
        SUM(total_facturado)            AS total_facturado,
        ROUND(AVG(total_facturado), 2)  AS ticket_promedio
   FROM venta
@@ -64,7 +68,7 @@ SELECT DATE_FORMAT(fecha, '%Y-%m')     AS mes,
 -- 5. Facturación por forma de pago y su porcentaje sobre el total
 -- -----------------------------------------------------
 SELECT forma_de_pago,
-       COUNT(*)             AS cantidad_tickets,
+       COUNT(*)             AS cantidad_ventas,
        SUM(total_facturado) AS total_facturado,
        ROUND(100 * SUM(total_facturado) / (SELECT SUM(total_facturado) FROM venta), 2) AS porcentaje
   FROM venta
@@ -72,46 +76,54 @@ SELECT forma_de_pago,
  ORDER BY total_facturado DESC;
 
 -- -----------------------------------------------------
--- 6. Top 3 clientes por monto comprado, y cuánto se vendió a
---    consumidor final (tickets sin cliente identificado)
+-- 6. Top 3 clientes identificados por monto comprado, y cuánto se
+--    vendió a consumidor final (cliente 1)
 -- -----------------------------------------------------
 (SELECT CONCAT(c.apellido, ', ', c.nombre) AS cliente,
-        COUNT(t.id_venta)                  AS cantidad_tickets,
-        SUM(t.total_facturado)             AS total_comprado
+        COUNT(v.id_venta)                  AS cantidad_ventas,
+        SUM(v.total_facturado)             AS total_comprado
    FROM cliente c
-   JOIN venta t ON t.id_cliente = c.id_cliente
+   JOIN venta v ON v.id_cliente = c.id_cliente
+  WHERE c.id_cliente <> 1
   GROUP BY c.id_cliente, c.apellido, c.nombre
   ORDER BY total_comprado DESC
   LIMIT 3)
 UNION ALL
 (SELECT 'Consumidor final', COUNT(*), SUM(total_facturado)
    FROM venta
-  WHERE id_cliente IS NULL);
+  WHERE id_cliente = 1);
 
 -- -----------------------------------------------------
--- 7. Productos a reponer: stock menor a 10 unidades
+-- 7. Alerta de stock crítico: productos activos por debajo de su
+--    stock mínimo, con cuánto falta para llegar al mínimo (RF-05)
 -- -----------------------------------------------------
-SELECT id_producto, nombre, tipo, cantidad_stock
-  FROM producto
- WHERE tipo <> 'servicio'
-   AND cantidad_stock < 10
- ORDER BY cantidad_stock, nombre;
+SELECT p.id_producto,
+       COALESCE(pl.nombre, i.nombre)      AS nombre,
+       p.cantidad_stock,
+       p.stock_minimo,
+       p.stock_minimo - p.cantidad_stock  AS faltante
+  FROM producto p
+  LEFT JOIN planta pl ON pl.id_producto = p.id_producto
+  LEFT JOIN insumo i  ON i.id_producto  = p.id_producto
+ WHERE p.activo = TRUE
+   AND p.cantidad_stock < p.stock_minimo
+ ORDER BY faltante DESC;
 
 -- -----------------------------------------------------
--- 8. Margen bruto por producto vendido
---    (precio de venta cobrado vs. precio de compra vigente)
+-- 8. Margen por producto vendido (precio cobrado vs. precio de compra vigente)
 -- -----------------------------------------------------
-SELECT p.nombre,
-       SUM(dv.cantidad)                                    AS unidades,
-       SUM(dv.subtotal)                                    AS facturado,
-       SUM(dv.cantidad * p.precio_compra)                  AS costo,
+SELECT COALESCE(pl.nombre, i.nombre)                        AS nombre,
+       SUM(dv.cantidad)                                     AS unidades,
+       SUM(dv.subtotal)                                     AS facturado,
+       SUM(dv.cantidad * p.precio_compra)                   AS costo,
        SUM(dv.subtotal) - SUM(dv.cantidad * p.precio_compra) AS margen,
        ROUND(100 * (SUM(dv.subtotal) - SUM(dv.cantidad * p.precio_compra))
-                 / SUM(dv.subtotal), 2)                    AS margen_pct
+                 / SUM(dv.subtotal), 2)                     AS margen_pct
   FROM producto p
   JOIN detalle_venta dv ON dv.id_producto = p.id_producto
- WHERE p.tipo <> 'servicio'
- GROUP BY p.id_producto, p.nombre
+  LEFT JOIN planta pl   ON pl.id_producto = p.id_producto
+  LEFT JOIN insumo i    ON i.id_producto  = p.id_producto
+ GROUP BY p.id_producto, pl.nombre, i.nombre
  ORDER BY margen DESC;
 
 -- -----------------------------------------------------
@@ -119,112 +131,63 @@ SELECT p.nombre,
 -- -----------------------------------------------------
 SELECT pr.nombre_empresa,
        pr.cuit,
-       COUNT(c.id_compra) AS cantidad_compras,
-       SUM(c.total)       AS total_comprado,
-       MAX(c.fecha)       AS ultima_compra
+       COUNT(c.id_compra)     AS cantidad_compras,
+       SUM(c.total_facturado) AS total_comprado,
+       MAX(c.fecha)           AS ultima_compra
   FROM proveedor pr
   LEFT JOIN compra c ON c.id_proveedor = pr.id_proveedor
  GROUP BY pr.id_proveedor, pr.nombre_empresa, pr.cuit
  ORDER BY total_comprado DESC;
 
 -- -----------------------------------------------------
--- 10. Plantas de interior para poca o media luz, con su tipo
---     (consulta sobre la especialización planta -> producto)
+-- 10. Productos que nunca se vendieron
 -- -----------------------------------------------------
-SELECT p.nombre,
-       pl.nombre_cientifico,
-       tp.nombre AS tipo_planta,
-       pl.nivel_luz,
-       pl.riego_cada_dias,
-       p.precio_venta,
-       p.cantidad_stock
-  FROM planta pl
-  JOIN producto p     ON p.id_producto     = pl.id_producto
-  JOIN tipo_planta tp ON tp.id_tipo_planta = pl.id_tipo_planta
- WHERE pl.de_interior = TRUE
-   AND pl.nivel_luz IN ('baja', 'media')
- ORDER BY pl.nivel_luz, p.nombre;
-
--- -----------------------------------------------------
--- 11. Servicios vendidos, con su tipo y si son a domicilio
--- -----------------------------------------------------
-SELECT p.nombre,
-       ts.nombre                  AS tipo_servicio,
-       s.a_domicilio,
-       COUNT(dv.id_venta)         AS veces_vendido,
-       COALESCE(SUM(dv.subtotal), 0) AS facturado
-  FROM servicio s
-  JOIN producto p       ON p.id_producto       = s.id_producto
-  JOIN tipo_servicio ts ON ts.id_tipo_servicio = s.id_tipo_servicio
-  LEFT JOIN detalle_venta dv ON dv.id_producto = p.id_producto
- GROUP BY p.id_producto, p.nombre, ts.nombre, s.a_domicilio
- ORDER BY facturado DESC;
-
--- -----------------------------------------------------
--- 12. Productos que nunca se vendieron
--- -----------------------------------------------------
-SELECT p.id_producto, p.nombre, p.tipo, p.cantidad_stock
+SELECT p.id_producto,
+       COALESCE(pl.nombre, i.nombre) AS nombre,
+       p.cantidad_stock,
+       p.activo
   FROM producto p
+  LEFT JOIN planta pl ON pl.id_producto = p.id_producto
+  LEFT JOIN insumo i  ON i.id_producto  = p.id_producto
  WHERE NOT EXISTS (SELECT 1 FROM detalle_venta dv WHERE dv.id_producto = p.id_producto)
- ORDER BY p.tipo, p.nombre;
+ ORDER BY nombre;
 
 -- -----------------------------------------------------
--- 13. Detalle de un ticket (como se imprimiría)
+-- 11. Detalle de una venta (como se imprimiría el ticket)
 -- -----------------------------------------------------
-SELECT t.id_venta,
-       t.fecha,
-       COALESCE(CONCAT(c.apellido, ', ', c.nombre), 'Consumidor final') AS cliente,
-       CONCAT(v.apellido, ', ', v.nombre) AS vendedor,
-       p.nombre                           AS producto,
+SELECT v.id_venta,
+       v.fecha,
+       CONCAT_WS(', ', c.apellido, c.nombre) AS cliente,
+       CONCAT(ve.apellido, ', ', ve.nombre)  AS vendedor,
+       COALESCE(pl.nombre, i.nombre)         AS producto,
        dv.cantidad,
        dv.precio_unitario,
        dv.subtotal,
-       t.total_facturado
-  FROM venta t
-  LEFT JOIN cliente c   ON c.id_cliente  = t.id_cliente
-  JOIN vendedor v       ON v.id_vendedor = t.id_vendedor
-  JOIN detalle_venta dv ON dv.id_venta   = t.id_venta
-  JOIN producto p       ON p.id_producto = dv.id_producto
- WHERE t.id_venta = 3;
+       v.total_facturado
+  FROM venta v
+  JOIN cliente c        ON c.id_cliente   = v.id_cliente
+  JOIN vendedor ve      ON ve.id_vendedor = v.id_vendedor
+  JOIN detalle_venta dv ON dv.id_venta    = v.id_venta
+  LEFT JOIN planta pl   ON pl.id_producto = dv.id_producto
+  LEFT JOIN insumo i    ON i.id_producto  = dv.id_producto
+ WHERE v.id_venta = 3;
 
 -- -----------------------------------------------------
--- 14. Control de consistencia de los triggers:
---     stock actual = unidades compradas - unidades vendidas
---     y total de cada ticket = suma de sus subtotales.
---     Ambas consultas deben devolver 0 filas.
+-- 12. Historial de compras de un cliente (RF-05)
 -- -----------------------------------------------------
-SELECT p.id_producto, p.nombre, p.cantidad_stock,
-       COALESCE(dc.comprado, 0) - COALESCE(dv.vendido, 0) AS stock_esperado
-  FROM producto p
-  LEFT JOIN (SELECT id_producto, SUM(cantidad) AS comprado
-               FROM detalle_compra GROUP BY id_producto) dc ON dc.id_producto = p.id_producto
-  LEFT JOIN (SELECT id_producto, SUM(cantidad) AS vendido
-               FROM detalle_venta GROUP BY id_producto) dv ON dv.id_producto = p.id_producto
- WHERE p.tipo <> 'servicio'
-   AND p.cantidad_stock <> COALESCE(dc.comprado, 0) - COALESCE(dv.vendido, 0);
+SELECT v.fecha,
+       v.id_venta,
+       COALESCE(pl.nombre, i.nombre) AS producto,
+       dv.cantidad,
+       dv.precio_unitario,
+       dv.subtotal
+  FROM venta v
+  JOIN detalle_venta dv ON dv.id_venta    = v.id_venta
+  LEFT JOIN planta pl   ON pl.id_producto = dv.id_producto
+  LEFT JOIN insumo i    ON i.id_producto  = dv.id_producto
+ WHERE v.id_cliente = 2
+ ORDER BY v.fecha, v.id_venta;
 
-SELECT t.id_venta, t.total_facturado, SUM(dv.subtotal) AS suma_detalles
-  FROM venta t
-  JOIN detalle_venta dv ON dv.id_venta = t.id_venta
- GROUP BY t.id_venta, t.total_facturado
-HAVING t.total_facturado <> SUM(dv.subtotal);
-
--- -----------------------------------------------------
--- 15. Prueba de trigger: una venta descuenta stock
---     Se hace dentro de una transacción y se deshace al final.
--- -----------------------------------------------------
-START TRANSACTION;
-
-SELECT nombre, cantidad_stock AS stock_antes FROM producto WHERE id_producto = 7;
-
-INSERT INTO venta (id_cliente, id_vendedor, forma_de_pago) VALUES (NULL, 1, 'efectivo');
-INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario)
-VALUES (LAST_INSERT_ID(), 7, 2, 16500.00);
-
-SELECT nombre, cantidad_stock AS stock_despues FROM producto WHERE id_producto = 7;
-SELECT id_venta, total_facturado FROM venta ORDER BY id_venta DESC LIMIT 1;
-
-ROLLBACK;
 
 -- =====================================================
 -- PRUEBAS NEGATIVAS
@@ -234,8 +197,7 @@ ROLLBACK;
 -- El cliente mysql corta en el primer error, así que esta sección se
 -- ejecuta con:   mysql --force -u <usuario> -p < queries.sql
 -- (en Workbench, ejecutar cada sentencia por separado).
--- Todo va dentro de una transacción que se deshace al final, así la
--- base queda igual aunque alguna prueba no fallara.
+-- Todo va dentro de una transacción que se deshace al final.
 -- =====================================================
 
 START TRANSACTION;
@@ -260,89 +222,116 @@ UPDATE detalle_venta SET cantidad = 500 WHERE id_venta = 4 AND id_producto = 5;
 UPDATE detalle_venta SET id_producto = 2 WHERE id_venta = 1 AND id_producto = 1;
 
 -- -----------------------------------------------------
--- N4. Registrar la compra de un servicio
---     Error esperado: 'No se pueden registrar compras de servicios' (trg_detalle_compra_bi)
+-- N4. Vender un producto dado de baja
+--     Error esperado: 'El producto está dado de baja' (trg_detalle_venta_bi)
 -- -----------------------------------------------------
-INSERT INTO detalle_compra (id_compra, id_producto, cantidad, precio_unitario)
-VALUES (1, 18, 1, 100.00);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario)
+VALUES (1, 20, 1, 1200.00);
 
 -- -----------------------------------------------------
--- N5. Anular una compra cuyo stock ya se vendió
---     (del limonero se compraron 6 y se vendieron 2: quedaría en -2)
---     Error esperado: CHECK 'chk_producto_stock_no_negativo'
+-- N5. Repetir un producto dentro de la misma venta
+--     Error esperado: 'Duplicate entry' en uq_dventa_venta_producto
+-- -----------------------------------------------------
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario)
+VALUES (1, 1, 1, 3500.00);
+
+-- -----------------------------------------------------
+-- N6. Anular un renglón de compra cuyo stock ya se vendió
+--     (del limonero se compraron 6 y se vendieron 3: quedaría en -3)
+--     Error esperado: CHECK 'chk_producto_stock' (trg_detalle_compra_ad)
 -- -----------------------------------------------------
 DELETE FROM detalle_compra WHERE id_compra = 2 AND id_producto = 5;
 
 -- -----------------------------------------------------
--- N6. Cargar como planta un producto que es insumo
---     Error esperado: FK 'fk_planta_producto' (la FK compuesta exige tipo = 'planta')
+-- N7. Anular la compra completa: mismo caso, por la cascada
+--     Error esperado: CHECK 'chk_producto_stock' (trg_compra_bd)
 -- -----------------------------------------------------
-INSERT INTO planta (id_producto, id_tipo_planta) VALUES (11, 1);
+DELETE FROM compra WHERE id_compra = 2;
 
 -- -----------------------------------------------------
--- N7. Planta sin precio de compra
---     Error esperado: CHECK 'chk_producto_stock_segun_tipo'
+-- N8. Cargar como planta un producto que ya es insumo
+--     Error esperado: 'El producto ya está registrado como insumo' (trg_planta_bi)
 -- -----------------------------------------------------
-INSERT INTO producto (nombre, tipo, cantidad_stock, precio_compra, precio_venta)
-VALUES ('Helecho', 'planta', 0, NULL, 5000.00);
+INSERT INTO planta (nombre, tipo_planta, nivel_de_luz, riego_cada_dias, id_producto)
+VALUES ('Helecho', 'ornamental', 'bajo', 5, 11);
 
 -- -----------------------------------------------------
--- N8. Servicio con stock
---     Error esperado: CHECK 'chk_producto_stock_segun_tipo'
+-- N9. Dos plantas para el mismo producto
+--     Error esperado: 'Duplicate entry' en la clave única de planta.id_producto
 -- -----------------------------------------------------
-INSERT INTO producto (nombre, tipo, cantidad_stock, precio_compra, precio_venta)
-VALUES ('Fumigación', 'servicio', 10, NULL, 20000.00);
+INSERT INTO planta (nombre, tipo_planta, nivel_de_luz, riego_cada_dias, id_producto)
+VALUES ('Echeveria rosa', 'suculenta', 'alto', 10, 1);
 
 -- -----------------------------------------------------
--- N9. Tipo de producto inexistente
---     Error esperado: CHECK 'chk_producto_tipo'
+-- N10. Categoría de planta fuera de las permitidas
+--      Error esperado: 'Data truncated for column tipo_planta' (ENUM, modo estricto)
 -- -----------------------------------------------------
-INSERT INTO producto (nombre, tipo, cantidad_stock, precio_compra, precio_venta)
-VALUES ('Semillas de tomate', 'semilla', 0, 300.00, 800.00);
+UPDATE planta SET tipo_planta = 'helecho' WHERE id_planta = 1;
 
 -- -----------------------------------------------------
--- N10. Precio de venta negativo
+-- N11. Riego fuera de rango
+--      Error esperado: CHECK 'chk_planta_riego'
+-- -----------------------------------------------------
+UPDATE planta SET riego_cada_dias = 0 WHERE id_planta = 1;
+
+-- -----------------------------------------------------
+-- N12. Precio de venta negativo
 --      Error esperado: CHECK 'chk_producto_precios'
 -- -----------------------------------------------------
 UPDATE producto SET precio_venta = -100 WHERE id_producto = 1;
 
 -- -----------------------------------------------------
--- N11. Detalle de venta con cantidad 0
+-- N13. Detalle de venta con cantidad 0
 --      Error esperado: CHECK 'chk_dventa_cantidad'
 -- -----------------------------------------------------
 INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario)
 VALUES (1, 2, 0, 4800.00);
 
 -- -----------------------------------------------------
--- N12. Forma de pago fuera de las permitidas
+-- N14. Forma de pago fuera de las permitidas
 --      Error esperado: 'Data truncated for column forma_de_pago' (ENUM, modo estricto)
 -- -----------------------------------------------------
-INSERT INTO venta (id_cliente, id_vendedor, forma_de_pago)
-VALUES (1, 1, 'cheque');
+INSERT INTO venta (forma_de_pago, id_cliente, id_vendedor)
+VALUES ('cheque', 2, 1);
 
 -- -----------------------------------------------------
--- N13. Cliente con DNI repetido
+-- N15. Venta con fecha futura
+--      Error esperado: 'La fecha de la venta no puede ser posterior a hoy' (trg_venta_bi)
+-- -----------------------------------------------------
+INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor)
+VALUES (CURRENT_DATE + INTERVAL 1 DAY, 'efectivo', 2, 1);
+
+-- -----------------------------------------------------
+-- N16. Cliente con DNI repetido
 --      Error esperado: 'Duplicate entry' en la clave única de dni
 -- -----------------------------------------------------
 INSERT INTO cliente (nombre, apellido, dni) VALUES ('Laura', 'Benítez', '32456789');
 
 -- -----------------------------------------------------
--- N14. Ticket de un vendedor que no existe
+-- N17. CUIT que no tiene 11 dígitos
+--      Error esperado: CHECK 'chk_proveedor_cuit'
+-- -----------------------------------------------------
+INSERT INTO proveedor (nombre_empresa, cuit, telefono)
+VALUES ('Vivero Sur', '3071234567', '1140005555');
+
+-- -----------------------------------------------------
+-- N18. Venta de un vendedor que no existe
 --      Error esperado: FK 'fk_venta_vendedor'
 -- -----------------------------------------------------
-INSERT INTO venta (id_cliente, id_vendedor, forma_de_pago)
-VALUES (1, 99, 'efectivo');
+INSERT INTO venta (forma_de_pago, id_cliente, id_vendedor)
+VALUES ('efectivo', 2, 99);
 
 -- -----------------------------------------------------
--- N15. Borrar un cliente que tiene ventas
+-- N19. Borrar un cliente que tiene ventas
 --      Error esperado: FK 'fk_venta_cliente' (ON DELETE RESTRICT)
 -- -----------------------------------------------------
-DELETE FROM cliente WHERE id_cliente = 1;
+DELETE FROM cliente WHERE id_cliente = 2;
 
 -- -----------------------------------------------------
--- N16. Borrar un ticket sin borrar antes sus detalles
---      Error esperado: FK 'fk_dventa_venta' (ON DELETE RESTRICT)
+-- N20. Borrar un producto con ventas y compras (se debe dar de baja con activo = FALSE)
+--      Error esperado: FK 'fk_dcompra_producto' (ON DELETE RESTRICT). También lo
+--      frenaría 'fk_dventa_producto'; MySQL informa la primera que encuentra.
 -- -----------------------------------------------------
-DELETE FROM venta WHERE id_venta = 1;
+DELETE FROM producto WHERE id_producto = 1;
 
 ROLLBACK;
