@@ -39,19 +39,25 @@ SELECT p.id_producto,
 
 -- -----------------------------------------------------
 -- 3. Producto más facturado de cada tipo (planta, insumo)
---    Usa una función de ventana para rankear dentro de cada tipo.
+--    Una consulta por tipo, cada una con su primer puesto (LIMIT 1).
 -- -----------------------------------------------------
-SELECT tipo, nombre, facturado
-  FROM (SELECT CASE WHEN pl.id_planta IS NOT NULL THEN 'planta' ELSE 'insumo' END AS tipo,
-               COALESCE(pl.nombre, i.nombre) AS nombre,
-               SUM(dv.subtotal)              AS facturado
-          FROM producto p
-          JOIN detalle_venta dv ON dv.id_producto = p.id_producto
-          LEFT JOIN planta pl   ON pl.id_producto = p.id_producto
-          LEFT JOIN insumo i    ON i.id_producto  = p.id_producto
-         GROUP BY p.id_producto, pl.id_planta, pl.nombre, i.nombre) ranking
- WHERE puesto = 1
- ORDER BY facturado DESC;
+(SELECT 'planta'         AS tipo,
+        pl.nombre        AS nombre,
+        SUM(dv.subtotal) AS facturado
+   FROM planta pl
+   JOIN detalle_venta dv ON dv.id_producto = pl.id_producto
+  GROUP BY pl.id_planta, pl.nombre
+  ORDER BY facturado DESC
+  LIMIT 1)
+UNION ALL
+(SELECT 'insumo'         AS tipo,
+        i.nombre         AS nombre,
+        SUM(dv.subtotal) AS facturado
+   FROM insumo i
+   JOIN detalle_venta dv ON dv.id_producto = i.id_producto
+  GROUP BY i.id_insumo, i.nombre
+  ORDER BY facturado DESC
+  LIMIT 1);
 
 -- -----------------------------------------------------
 -- 4. Ventas mensuales: cantidad de ventas, total y ticket promedio (RF-05)

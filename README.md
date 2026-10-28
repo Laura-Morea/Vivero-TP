@@ -20,8 +20,8 @@ Diagramas/
   DER_Vivero.drawio / .png        Diagrama entidad-relación (modelo conceptual)
   EER_tablas_Vivero.drawio / .png Modelo lógico: tablas, columnas, claves y relaciones
 Scripts/
-  schema.sql                      Base y tablas con PK, NOT NULL, DEFAULT, UNIQUE y CHECK
-  integridad_referencial.sql      Claves foráneas
+  schema.sql                      Base y tablas con PK, NOT NULL, DEFAULT y UNIQUE
+  integridad_referencial.sql      Restricciones con nombre: CHECK y claves foráneas
   indices.sql                     Índices para búsquedas y reportes
   triggers.sql                    Stock, totales y validaciones de negocio
   datos.sql                       Datos de prueba
@@ -79,11 +79,10 @@ mysql --force -vvv -t -u <usuario> -p < queries.sql
 
 `-vvv -t` muestra cada sentencia junto con su resultado en forma de tabla.
 
-- **Consultas 1 a 17**: reportes (top de vendedores y productos, ventas por mes,
-  formas de pago, márgenes, stock crítico, historial por cliente, etc.) y
-  controles de consistencia de los triggers (la 15 debe devolver 0 filas en
-  sus dos consultas). La 16 simula una venta y la 17 anula otra, dentro de
-  transacciones que se deshacen con `ROLLBACK`.
+- **Consultas 1 a 12**: reportes de top de vendedores, productos y clientes,
+  producto más facturado por tipo, ventas por mes, formas de pago, stock
+  crítico, márgenes, compras por proveedor, productos sin ventas, detalle de
+  una venta e historial de compras por cliente.
 - **Pruebas negativas N1 a N20**: cada sentencia **debe fallar**. El comentario
   de cada una indica qué restricción o trigger la frena; MySQL escribe el
   mensaje completo (por ejemplo `Check constraint 'chk_planta_riego' is violated.`).

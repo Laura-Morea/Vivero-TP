@@ -4,9 +4,9 @@
 -- "producto" es el supertipo; "planta" e "insumo" son sus subtipos
 -- (una tabla por subtipo, cada una con su PK y una FK única a producto).
 --
--- Este archivo define las tablas con sus restricciones de dominio y de
--- entidad (PK, NOT NULL, DEFAULT, UNIQUE, CHECK). Las claves foráneas
--- están en integridad_referencial.sql y se ejecutan después.
+-- Este archivo define las tablas con sus columnas, tipos, PK, NOT NULL,
+-- DEFAULT y UNIQUE. Las restricciones con nombre (CHECK y claves
+-- foráneas) están en integridad_referencial.sql y se ejecutan después.
 -- =====================================================
 
 DROP DATABASE IF EXISTS vivero;
@@ -24,10 +24,7 @@ CREATE TABLE vendedor (
     dni         VARCHAR(12)  NOT NULL UNIQUE,
     telefono    VARCHAR(15)  NOT NULL,
     mail        VARCHAR(100) NULL,
-    direccion   VARCHAR(100) NULL,
-    CONSTRAINT chk_vendedor_dni      CHECK (dni REGEXP '^[0-9]+$'),
-    CONSTRAINT chk_vendedor_telefono CHECK (telefono REGEXP '^[+]?[0-9]+$'),
-    CONSTRAINT chk_vendedor_mail     CHECK (mail LIKE '%_@_%._%')
+    direccion   VARCHAR(100) NULL
 );
 
 -- Todos los datos son opcionales: el cliente puede no querer darlos.
@@ -37,19 +34,14 @@ CREATE TABLE cliente (
     nombre      VARCHAR(50) NULL,
     apellido    VARCHAR(50) NULL,
     dni         VARCHAR(12) NULL UNIQUE,
-    telefono    VARCHAR(15) NULL,
-    -- admite letras: puede ser un pasaporte o un documento extranjero
-    CONSTRAINT chk_cliente_dni      CHECK (dni REGEXP '^[0-9A-Za-z]+$'),
-    CONSTRAINT chk_cliente_telefono CHECK (telefono REGEXP '^[+]?[0-9]+$')
+    telefono    VARCHAR(15) NULL
 );
 
 CREATE TABLE proveedor (
     id_proveedor   INT AUTO_INCREMENT PRIMARY KEY,
     nombre_empresa VARCHAR(100) NOT NULL,
     cuit           VARCHAR(11)  NOT NULL UNIQUE,      -- 11 dígitos, sin guiones
-    telefono       VARCHAR(15)  NOT NULL,
-    CONSTRAINT chk_proveedor_cuit     CHECK (cuit REGEXP '^[0-9]{11}$'),
-    CONSTRAINT chk_proveedor_telefono CHECK (telefono REGEXP '^[+]?[0-9]+$')
+    telefono       VARCHAR(15)  NOT NULL
 );
 
 -- -----------------------------------------------------
@@ -62,10 +54,7 @@ CREATE TABLE producto (
     stock_minimo   INT           NOT NULL DEFAULT 0,  -- por debajo de este valor hay que reponer
     precio_compra  DECIMAL(10,2) NOT NULL,            -- precio de la última compra
     precio_venta   DECIMAL(10,2) NOT NULL,
-    activo         BOOLEAN       NOT NULL DEFAULT TRUE, -- baja lógica: FALSE = no se vende más
-    CONSTRAINT chk_producto_stock   CHECK (cantidad_stock >= 0),
-    CONSTRAINT chk_producto_minimo  CHECK (stock_minimo >= 0),
-    CONSTRAINT chk_producto_precios CHECK (precio_compra >= 0 AND precio_venta >= 0)
+    activo         BOOLEAN       NOT NULL DEFAULT TRUE -- baja lógica: FALSE = no se vende más
 );
 
 -- -----------------------------------------------------
@@ -84,8 +73,7 @@ CREATE TABLE planta (
     descripcion     VARCHAR(100) NULL,
     nivel_de_luz    ENUM('bajo', 'medio', 'alto') NOT NULL,
     riego_cada_dias SMALLINT     NOT NULL,
-    id_producto     INT          NOT NULL UNIQUE,
-    CONSTRAINT chk_planta_riego CHECK (riego_cada_dias BETWEEN 1 AND 365)
+    id_producto     INT          NOT NULL UNIQUE
 );
 
 CREATE TABLE insumo (
@@ -105,8 +93,7 @@ CREATE TABLE venta (
     forma_de_pago   ENUM('efectivo', 'débito', 'crédito', 'transferencia') NOT NULL,
     total_facturado DECIMAL(10,2) NOT NULL DEFAULT 0,     -- derivado: suma de subtotales (trigger)
     id_cliente      INT NOT NULL,                         -- relación "recibe"
-    id_vendedor     INT NOT NULL,                         -- relación "realiza"
-    CONSTRAINT chk_venta_total CHECK (total_facturado >= 0)
+    id_vendedor     INT NOT NULL                          -- relación "realiza"
 );
 
 -- Relación N:M venta - producto
@@ -118,9 +105,7 @@ CREATE TABLE detalle_venta (
     precio_unitario  DECIMAL(10,2) NOT NULL,              -- precio cobrado en esta venta
     subtotal         DECIMAL(10,2) NOT NULL DEFAULT 0,    -- derivado: cantidad * precio_unitario (trigger)
     -- un producto aparece una sola vez por venta (más unidades = más cantidad)
-    UNIQUE KEY uq_dventa_venta_producto (id_venta, id_producto),
-    CONSTRAINT chk_dventa_cantidad CHECK (cantidad > 0),
-    CONSTRAINT chk_dventa_precio   CHECK (precio_unitario >= 0)
+    UNIQUE KEY uq_dventa_venta_producto (id_venta, id_producto)
 );
 
 -- -----------------------------------------------------
@@ -132,8 +117,7 @@ CREATE TABLE compra (
     fecha           DATE NOT NULL DEFAULT (CURRENT_DATE), -- no puede ser futura: trg_compra_bi/bu
     forma_de_pago   ENUM('efectivo', 'débito', 'crédito', 'transferencia') NOT NULL,
     total_facturado DECIMAL(10,2) NOT NULL DEFAULT 0,     -- derivado: suma de subtotales (trigger)
-    id_proveedor    INT NOT NULL,                         -- relación "provee"
-    CONSTRAINT chk_compra_total CHECK (total_facturado >= 0)
+    id_proveedor    INT NOT NULL                          -- relación "provee"
 );
 
 -- Relación N:M compra - producto
@@ -144,7 +128,5 @@ CREATE TABLE detalle_compra (
     cantidad          INT NOT NULL,
     precio_unitario   DECIMAL(10,2) NOT NULL,             -- precio pagado en esta compra
     subtotal          DECIMAL(10,2) NOT NULL DEFAULT 0,   -- derivado: cantidad * precio_unitario (trigger)
-    UNIQUE KEY uq_dcompra_compra_producto (id_compra, id_producto),
-    CONSTRAINT chk_dcompra_cantidad CHECK (cantidad > 0),
-    CONSTRAINT chk_dcompra_precio   CHECK (precio_unitario >= 0)
+    UNIQUE KEY uq_dcompra_compra_producto (id_compra, id_producto)
 );

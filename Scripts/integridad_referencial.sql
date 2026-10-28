@@ -1,8 +1,12 @@
 -- =====================================================
--- Restricciones de integridad referencial (MySQL 8.0.16+)
+-- Restricciones de integridad (MySQL 8.0.16+)
 -- Ejecutar DESPUÉS de schema.sql.
 --
--- Política:
+-- Contiene, en este orden:
+--   1. Restricciones de dominio (CHECK).
+--   2. Claves foráneas.
+--
+-- Política de las claves foráneas:
 --   * ON UPDATE CASCADE en todas: si cambia un id, se propaga.
 --   * ON DELETE RESTRICT hacia las entidades con historial (cliente,
 --     vendedor, proveedor, producto vendido o comprado): no se borran,
@@ -15,6 +19,50 @@
 -- =====================================================
 
 USE vivero;
+
+-- =====================================================
+-- 1. RESTRICCIONES DE DOMINIO
+-- =====================================================
+
+ALTER TABLE vendedor
+    ADD CONSTRAINT chk_vendedor_dni      CHECK (dni REGEXP '^[0-9]+$'),
+    ADD CONSTRAINT chk_vendedor_telefono CHECK (telefono REGEXP '^[+]?[0-9]+$'),
+    ADD CONSTRAINT chk_vendedor_mail     CHECK (mail LIKE '%_@_%._%');
+
+-- el dni admite letras: puede ser un pasaporte o un documento extranjero
+ALTER TABLE cliente
+    ADD CONSTRAINT chk_cliente_dni      CHECK (dni REGEXP '^[0-9A-Za-z]+$'),
+    ADD CONSTRAINT chk_cliente_telefono CHECK (telefono REGEXP '^[+]?[0-9]+$');
+
+ALTER TABLE proveedor
+    ADD CONSTRAINT chk_proveedor_cuit     CHECK (cuit REGEXP '^[0-9]{11}$'),
+    ADD CONSTRAINT chk_proveedor_telefono CHECK (telefono REGEXP '^[+]?[0-9]+$');
+
+ALTER TABLE producto
+    ADD CONSTRAINT chk_producto_stock   CHECK (cantidad_stock >= 0),
+    ADD CONSTRAINT chk_producto_minimo  CHECK (stock_minimo >= 0),
+    ADD CONSTRAINT chk_producto_precios CHECK (precio_compra >= 0 AND precio_venta >= 0);
+
+ALTER TABLE planta
+    ADD CONSTRAINT chk_planta_riego CHECK (riego_cada_dias BETWEEN 1 AND 365);
+
+ALTER TABLE venta
+    ADD CONSTRAINT chk_venta_total CHECK (total_facturado >= 0);
+
+ALTER TABLE detalle_venta
+    ADD CONSTRAINT chk_dventa_cantidad CHECK (cantidad > 0),
+    ADD CONSTRAINT chk_dventa_precio   CHECK (precio_unitario >= 0);
+
+ALTER TABLE compra
+    ADD CONSTRAINT chk_compra_total CHECK (total_facturado >= 0);
+
+ALTER TABLE detalle_compra
+    ADD CONSTRAINT chk_dcompra_cantidad CHECK (cantidad > 0),
+    ADD CONSTRAINT chk_dcompra_precio   CHECK (precio_unitario >= 0);
+
+-- =====================================================
+-- 2. CLAVES FORÁNEAS
+-- =====================================================
 
 -- -----------------------------------------------------
 -- Subtipos de producto
