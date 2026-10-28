@@ -23,18 +23,18 @@ CREATE TABLE vendedor (
     apellido    VARCHAR(50)  NOT NULL,
     dni         VARCHAR(12)  NOT NULL UNIQUE,
     telefono    VARCHAR(15)  NOT NULL,
-    mail        VARCHAR(100) NULL,
-    direccion   VARCHAR(100) NULL
+    mail        VARCHAR(100),
+    direccion   VARCHAR(100)
 );
 
 -- Todos los datos son opcionales: el cliente puede no querer darlos.
 -- El "consumidor final" es una fila más de esta tabla (ver datos.sql).
 CREATE TABLE cliente (
     id_cliente  INT AUTO_INCREMENT PRIMARY KEY,
-    nombre      VARCHAR(50) NULL,
-    apellido    VARCHAR(50) NULL,
-    dni         VARCHAR(12) NULL UNIQUE,
-    telefono    VARCHAR(15) NULL
+    nombre      VARCHAR(50),
+    apellido    VARCHAR(50),
+    dni         VARCHAR(12) UNIQUE,
+    telefono    VARCHAR(15)
 );
 
 CREATE TABLE proveedor (
@@ -52,7 +52,7 @@ CREATE TABLE producto (
     id_producto    INT AUTO_INCREMENT PRIMARY KEY,
     cantidad_stock INT           NOT NULL DEFAULT 0,  -- lo actualizan los triggers
     stock_minimo   INT           NOT NULL DEFAULT 0,  -- por debajo de este valor hay que reponer
-    precio_compra  DECIMAL(10,2) NOT NULL,            -- precio de la última compra
+    precio_compra  DECIMAL(10,2),                     -- precio de la última compra; NULL = todavía sin compras
     precio_venta   DECIMAL(10,2) NOT NULL,
     activo         BOOLEAN       NOT NULL DEFAULT TRUE -- baja lógica: FALSE = no se vende más
 );
@@ -70,7 +70,7 @@ CREATE TABLE planta (
     tipo_planta     ENUM('suculenta', 'cactus', 'aromática', 'frutal',
                          'ornamental', 'arbusto', 'árbol', 'flor de estación') NOT NULL,
     de_interior     BOOLEAN      NOT NULL DEFAULT FALSE,
-    descripcion     VARCHAR(100) NULL,
+    descripcion     VARCHAR(100),
     nivel_de_luz    ENUM('bajo', 'medio', 'alto') NOT NULL,
     riego_cada_dias SMALLINT     NOT NULL,
     id_producto     INT          NOT NULL UNIQUE
@@ -79,7 +79,7 @@ CREATE TABLE planta (
 CREATE TABLE insumo (
     id_insumo   INT AUTO_INCREMENT PRIMARY KEY,
     nombre      VARCHAR(50)  NOT NULL,
-    descripcion VARCHAR(100) NULL,
+    descripcion VARCHAR(100),
     id_producto INT          NOT NULL UNIQUE
 );
 

@@ -96,7 +96,8 @@ mysql --force -vvv -t -u <usuario> -p < queries.sql
   `UNIQUE`). Las ventas y las compras apuntan solo a `producto`. Un trigger
   impide que un producto sea planta e insumo a la vez.
 - **Precios históricos.** Cada detalle de venta o de compra guarda el precio
-  unitario de ese momento. `producto.precio_compra` refleja la última compra.
+  unitario de ese momento. `producto.precio_compra` refleja la última compra
+  y queda en `NULL` mientras el producto no tenga compras.
 - **Un producto por renglón.** Los detalles tienen PK propia, pero
   `(id_venta, id_producto)` y `(id_compra, id_producto)` son `UNIQUE`: si se
   llevan más unidades, se aumenta la cantidad.
@@ -108,7 +109,8 @@ mysql --force -vvv -t -u <usuario> -p < queries.sql
 - **Stock crítico.** Cada producto tiene su `stock_minimo`; la consulta 7 lista
   los activos que están por debajo.
 - **Consumidor final.** Toda venta tiene cliente; las ventas a quien no se
-  identifica van al cliente 1, "Consumidor final".
+  identifica van al cliente 1, "Consumidor final". Es el único id fijo de los
+  datos de prueba: el resto los asigna `AUTO_INCREMENT`.
 - **Cascadas y triggers.** Borrar una venta o compra borra sus detalles por
   `ON DELETE CASCADE`. Como en MySQL las cascadas no disparan triggers,
   `trg_venta_bd` y `trg_compra_bd` ajustan el stock antes del borrado.
