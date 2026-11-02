@@ -1,0 +1,12 @@
+id_planta,nombre,tipo_planta,de_interior,descripcion,nivel_de_luz,riego_cada_dias,id_producto
+1,Echeveria,suculenta,0,"Echeveria elegans. Maceta n°10",alto,10,1
+2,"Aloe vera",suculenta,1,"Aloe barbadensis. Maceta n°12",medio,14,2
+3,Lavanda,aromática,0,"Lavandula angustifolia. Maceta n°14",alto,4,3
+4,Romero,aromática,0,"Salvia rosmarinus. Maceta n°14",alto,5,4
+5,"Limonero injertado",frutal,0,"Citrus limon. Ejemplar de 1,2 m en bolsa",alto,3,5
+6,Potus,ornamental,1,"Epipremnum aureum. Maceta colgante n°16",bajo,7,6
+7,"Monstera deliciosa",ornamental,1,"Monstera deliciosa. Maceta n°20",medio,7,7
+8,Sansevieria,ornamental,1,"Dracaena trifasciata. Maceta n°16",bajo,15,8
+9,"Jazmín del Cabo",arbusto,0,"Gardenia jasminoides. Maceta n°18",medio,3,9
+10,Petunia,"flor de estación",0,"Petunia x hybrida. Plantín en alvéolo",alto,2,10
+11,"Ficus lyrata",ornamental,1,"Ficus lyrata. Maceta n°24",alto,7,18

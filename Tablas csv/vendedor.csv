@@ -1,0 +1,5 @@
+id_vendedor,nombre,apellido,dni,telefono,mail,direccion
+1,Ana,Gutiérrez,29111222,1140001111,ana.gutierrez@viverotp.com.ar,"Av. Rivadavia 4520, CABA"
+2,Pablo,Herrera,33444555,1140002222,pablo.herrera@viverotp.com.ar,"Lavalle 1800, CABA"
+3,Carla,Molina,36777888,1140003333,carla.molina@viverotp.com.ar,"Av. Cabildo 2100, CABA"
+4,Nicolás,Acosta,31222333,1140004444,nicolas.acosta@viverotp.com.ar,"Av. San Martín 3300, CABA"

@@ -1,0 +1,12 @@
+id_cliente,nombre,apellido,dni,telefono
+1,"Consumidor final",NULL,NULL,NULL
+2,Lucía,Fernández,32456789,1145238890
+3,Martín,Gómez,28987654,1156781234
+4,Sofía,Rodríguez,40123456,NULL
+5,Javier,López,25678901,1160112233
+6,Valentina,Martínez,NULL,1133445566
+7,Diego,Pérez,35111222,1122998877
+8,Camila,Sánchez,AAB123456,+5491144556677
+9,Tomás,Romero,NULL,NULL
+10,Florencia,Díaz,42345678,1177889900
+11,Agustín,Torres,30999888,1111223344
