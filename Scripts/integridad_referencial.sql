@@ -25,18 +25,18 @@ USE vivero;
 -- =====================================================
 
 ALTER TABLE vendedor
-    ADD CONSTRAINT chk_vendedor_dni      CHECK (dni REGEXP '^[0-9]+$'),
-    ADD CONSTRAINT chk_vendedor_telefono CHECK (telefono REGEXP '^[+]?[0-9]+$'),
-    ADD CONSTRAINT chk_vendedor_mail     CHECK (mail LIKE '%_@_%._%');
+    ADD CONSTRAINT chk_vendedor_dni      CHECK (dni REGEXP '^[0-9]{7,12}$'),
+    ADD CONSTRAINT chk_vendedor_telefono CHECK (telefono REGEXP '^[+]?[0-9]{8,14}$'),
+    ADD CONSTRAINT chk_vendedor_mail     CHECK (mail LIKE '%_@_%._%' AND mail NOT LIKE '% %' AND mail NOT LIKE '%@%@%');
 
 -- el dni admite letras: puede ser un pasaporte o un documento extranjero
 ALTER TABLE cliente
-    ADD CONSTRAINT chk_cliente_dni      CHECK (dni REGEXP '^[0-9A-Za-z]+$'),
-    ADD CONSTRAINT chk_cliente_telefono CHECK (telefono REGEXP '^[+]?[0-9]+$');
+    ADD CONSTRAINT chk_cliente_dni      CHECK (dni REGEXP '^[0-9A-Za-z]{6,12}$'),
+    ADD CONSTRAINT chk_cliente_telefono CHECK (telefono REGEXP '^[+]?[0-9]{8,14}$');
 
 ALTER TABLE proveedor
     ADD CONSTRAINT chk_proveedor_cuit     CHECK (cuit REGEXP '^[0-9]{11}$'),
-    ADD CONSTRAINT chk_proveedor_telefono CHECK (telefono REGEXP '^[+]?[0-9]+$');
+    ADD CONSTRAINT chk_proveedor_telefono CHECK (telefono REGEXP '^[+]?[0-9]{8,14}$');
 
 ALTER TABLE producto
     ADD CONSTRAINT chk_producto_stock   CHECK (cantidad_stock >= 0),

@@ -1,5 +1,17 @@
-id_vendedor,nombre,apellido,dni,telefono,mail,direccion
-1,Ana,Gutiérrez,29111222,1140001111,ana.gutierrez@viverotp.com.ar,"Av. Rivadavia 4520, CABA"
-2,Pablo,Herrera,33444555,1140002222,pablo.herrera@viverotp.com.ar,"Lavalle 1800, CABA"
-3,Carla,Molina,36777888,1140003333,carla.molina@viverotp.com.ar,"Av. Cabildo 2100, CABA"
-4,Nicolás,Acosta,31222333,1140004444,nicolas.acosta@viverotp.com.ar,"Av. San Martín 3300, CABA"
+id_venta,fecha,forma_de_pago,total_facturado,id_cliente,id_vendedor
+1,2026-08-05,efectivo,15000.00,2,1
+2,2026-08-06,efectivo,12000.00,1,2
+3,2026-08-12,débito,37300.00,3,1
+4,2026-08-21,crédito,51000.00,4,3
+5,2026-08-25,transferencia,50500.00,5,2
+6,2026-09-02,efectivo,14400.00,1,4
+7,2026-09-05,débito,23700.00,6,1
+8,2026-09-12,crédito,38000.00,7,3
+9,2026-09-18,débito,13400.00,2,2
+10,2026-09-21,efectivo,24000.00,1,4
+11,2026-09-30,transferencia,27000.00,8,1
+12,2026-10-03,transferencia,55000.00,9,3
+13,2026-10-08,débito,26600.00,3,2
+14,2026-10-14,efectivo,25000.00,1,1
+15,2026-10-18,crédito,40000.00,10,4
+16,2026-10-20,transferencia,14200.00,11,3

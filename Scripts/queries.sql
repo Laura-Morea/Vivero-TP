@@ -209,11 +209,56 @@ SELECT v.fecha,
 START TRANSACTION;
 
 -- -----------------------------------------------------
+-- P1. Registrar una compra con una fila de detalle_compra 
+-- 	   (producto, cantidad y precio unitario).
+--     Resultado esperado: El subtotal se calcula como  
+-- 	   cantidad × precio_unitario. El stock del producto  
+-- 	   aumenta en la cantidad comprada y su precio_compra
+-- 	   pasa a ser el precio unitario. El total_facturado 
+-- 	   de la compra se recalcula.
+-- -----------------------------------------------------
+INSERT INTO compra (fecha, forma_de_pago, id_proveedor) VALUE (CURRENT_DATE(), 'efectivo', 3);
+INSERT INTO detalle_compra (id_compra, id_producto, cantidad, precio_unitario) VALUE (LAST_INSERT_ID(), 14,  10,  4500.00);
+    
+    
+-- -----------------------------------------------------
+-- P2. Registrar una venta con dos filas de detalle_venta.
+--     Resultado esperado: El subtotal de cada fila se 
+-- 	   calcula como cantidad × precio_unitario. El stock 
+-- 	   de cada producto disminuye en la cantidad vendida 
+-- 	   y el total_facturado de la venta es la suma de los 
+-- 	   subtotales.
+-- -----------------------------------------------------
+INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUE (CURRENT_DATE(), 'crédito', 4, 1);
+SET @venta = LAST_INSERT_ID();
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario) VALUES 
+			(@venta, 10,  10,  1000.00), (@venta, 16, 2, 6500.00);
+
+-- -----------------------------------------------------
+-- P3. Borrar una venta completa.
+--     Resultado esperado: Se eliminan sus detalles (ON 
+-- 	   DELETE CASCADE) y el stock vendido vuelve al 
+-- 	   producto (trg_venta_bd).
+-- -----------------------------------------------------
+DELETE FROM venta WHERE id_venta = @venta;
+
+
+-- -----------------------------------------------------
+-- P4. Dar de baja un producto (activo = FALSE).
+--     Resultado esperado: El producto permanece en la 
+-- 	   base con su historial y deja de poder venderse.
+-- -----------------------------------------------------
+UPDATE producto SET activo = 0 WHERE id_producto = 14; 
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario)
+	VALUE (16, 14, 1, 4500.00);
+
+
+-- -----------------------------------------------------
 -- N1. Vender más unidades que el stock disponible
 --     Error esperado: 'Stock insuficiente para el producto' (trg_detalle_venta_bi)
 -- -----------------------------------------------------
 INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario)
-VALUES (1, 5, 100, 22000.00);
+	VALUES (1, 5, 100, 22000.00);
 
 -- -----------------------------------------------------
 -- N2. Aumentar la cantidad de un detalle de venta por encima del stock
