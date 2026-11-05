@@ -8,9 +8,9 @@
 -- tabla numera sus filas 1, 2, 3... en el orden en que se insertan; las
 -- FK de más abajo usan esos números, indicados en los comentarios.
 --
--- Los productos se dan de alta con stock 0 y precio_compra 0: el stock,
--- el precio_compra vigente y los totales los completan los triggers al
--- cargar las compras y las ventas. Por eso las compras van antes que las
+-- Los productos se dan de alta con stock 0 y precios en 0: el stock,
+-- el precio_compra y el precio_venta vigentes y los totales los
+-- completan los triggers al cargar las compras y las ventas. Por eso las compras van antes que las
 -- ventas.
 -- =====================================================
 
@@ -57,27 +57,27 @@ INSERT INTO proveedor (nombre_empresa, cuit, telefono) VALUES
 -- 20 está dado de baja (activo = FALSE): tiene stock pero no se vende más.
 -- -----------------------------------------------------
 
-INSERT INTO producto (cantidad_stock, stock_minimo, precio_compra, precio_venta, activo) VALUES
-    (0,  5, 0,  3500.00, TRUE),    -- 1  Echeveria
-    (0,  5, 0,  4800.00, TRUE),    -- 2  Aloe vera
-    (0,  5, 0,  4200.00, TRUE),    -- 3  Lavanda
-    (0,  5, 0,  3000.00, TRUE),    -- 4  Romero
-    (0,  5, 0, 22000.00, TRUE),    -- 5  Limonero injertado
-    (0,  5, 0,  6000.00, TRUE),    -- 6  Potus
-    (0,  4, 0, 16500.00, TRUE),    -- 7  Monstera deliciosa
-    (0,  5, 0,  7200.00, TRUE),    -- 8  Sansevieria
-    (0,  6, 0,  9500.00, TRUE),    -- 9  Jazmín del Cabo
-    (0, 50, 0,  1000.00, TRUE),    -- 10 Petunia
-    (0, 10, 0, 11000.00, TRUE),    -- 11 Sustrato universal 50 L
-    (0,  8, 0,  7000.00, TRUE),    -- 12 Fertilizante líquido 1 L
-    (0, 20, 0,  1500.00, TRUE),    -- 13 Maceta plástica n°14
-    (0, 10, 0,  9800.00, TRUE),    -- 14 Maceta cerámica n°20
-    (0,  3, 0, 16000.00, TRUE),    -- 15 Tijera de podar
-    (0,  5, 0,  6500.00, TRUE),    -- 16 Insecticida 500 ml
-    (0,  5, 0,  3800.00, TRUE),    -- 17 Perlita 5 L
-    (0,  2, 0, 19500.00, TRUE),    -- 18 Ficus lyrata
-    (0,  5, 0,  2800.00, TRUE),    -- 19 Guantes de jardinería
-    (0,  0, 0,  1200.00, FALSE);   -- 20 Maceta de barro n°12
+INSERT INTO producto (cantidad_stock, stock_minimo, activo) VALUES
+    (0,  5, TRUE),    -- 1  Echeveria
+    (0,  5, TRUE),    -- 2  Aloe vera
+    (0,  5, TRUE),    -- 3  Lavanda
+    (0,  5, TRUE),    -- 4  Romero
+    (0,  5, TRUE),    -- 5  Limonero injertado
+    (0,  5, TRUE),    -- 6  Potus
+    (0,  4, TRUE),    -- 7  Monstera deliciosa
+    (0,  5, TRUE),    -- 8  Sansevieria
+    (0,  6, TRUE),    -- 9  Jazmín del Cabo
+    (0, 50, TRUE),    -- 10 Petunia
+    (0, 10, TRUE),    -- 11 Sustrato universal 50 L
+    (0,  8, TRUE),    -- 12 Fertilizante líquido 1 L
+    (0, 20, TRUE),    -- 13 Maceta plástica n°14
+    (0, 10, TRUE),    -- 14 Maceta cerámica n°20
+    (0,  3, TRUE),    -- 15 Tijera de podar
+    (0,  5, TRUE),    -- 16 Insecticida 500 ml
+    (0,  5, TRUE),    -- 17 Perlita 5 L
+    (0,  2, TRUE),    -- 18 Ficus lyrata
+    (0,  5, TRUE),    -- 19 Guantes de jardinería
+    (0,  0, FALSE);   -- 20 Maceta de barro n°12
 
 -- plantas 1 a 11 (la última columna es el id_producto de arriba)
 INSERT INTO planta (nombre, tipo_planta, de_interior, descripcion, nivel_de_luz, riego_cada_dias, id_producto) VALUES
@@ -159,21 +159,23 @@ INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUES
     ('2026-10-18', 'crédito',       10, 4),    -- 15
     ('2026-10-20', 'transferencia', 11, 3);    -- 16
 
--- (id_venta, id_producto, cantidad, precio_unitario)
-INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario) VALUES
-    (1,  1,  3,  3500.00), (1, 13, 3, 1500.00),
-    (2,  10, 12, 1000.00),
-    (3,  7,  1, 16500.00), (3, 14, 1, 9800.00), (3, 11, 1, 11000.00),
-    (4,  5,  2, 22000.00), (4, 12, 1, 7000.00),
-    (5,  9,  3,  9500.00), (5, 11, 2, 11000.00),
-    (6,  3,  2,  4200.00), (6, 4, 2, 3000.00),
-    (7,  6,  2,  6000.00), (7, 8, 1, 7200.00), (7, 13, 3, 1500.00),
-    (8,  5,  1, 22000.00), (8, 15, 1, 16000.00),
-    (9,  2,  2,  4800.00), (9, 17, 1, 3800.00),
-    (10, 10, 24, 1000.00),
-    (11, 16, 2,  6500.00), (11, 12, 2, 7000.00),
-    (12, 7,  2, 16500.00), (12, 11, 2, 11000.00),
-    (13, 9,  2,  9500.00), (13, 17, 2, 3800.00),
-    (14, 1,  5,  3500.00), (14, 13, 5, 1500.00),
-    (15, 8,  2,  7200.00), (15, 14, 2, 9800.00), (15, 6, 1, 6000.00),
-    (16, 8,  1,  7200.00), (16, 12, 1, 7000.00);
+-- (id_venta, id_producto, cantidad)
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad) VALUES
+    (1,  1,  3), 
+    (1, 13, 3),
+    (2,  10, 12),
+    (3,  7,  1), 
+    (3, 14, 1), (3, 11, 1),
+    (4,  5,  2), (4, 12, 1),
+    (5,  9,  3), (5, 11, 2),
+    (6,  3,  2), (6, 4, 2),
+    (7,  6,  2), (7, 8, 1), (7, 13, 3),
+    (8,  5,  1), (8, 15, 1),
+    (9,  2,  2), (9, 17, 1),
+    (10, 10, 24),
+    (11, 16, 2), (11, 12, 2),
+    (12, 7,  2), (12, 11, 2),
+    (13, 9,  2), (13, 17, 2),
+    (14, 1,  5), (14, 13, 5),
+    (15, 8,  2), (15, 14, 2), (15, 6, 1),
+    (16, 8,  1), (16, 12, 1);

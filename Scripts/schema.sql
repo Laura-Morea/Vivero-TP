@@ -52,8 +52,8 @@ CREATE TABLE producto (
     id_producto    INT AUTO_INCREMENT PRIMARY KEY,
     cantidad_stock INT           NOT NULL DEFAULT 0,  -- lo actualizan los triggers
     stock_minimo   INT           NOT NULL DEFAULT 0,  -- por debajo de este valor hay que reponer
-    precio_compra  DECIMAL(10,2),                     -- precio de la última compra; NULL = todavía sin compras
-    precio_venta   DECIMAL(10,2) NOT NULL,
+    precio_compra  DECIMAL(10,2) NOT NULL DEFAULT 0.0,-- precio de la última compra; 0 = todavía sin compras
+    precio_venta   DECIMAL(10,2) NOT NULL DEFAULT 0.0,-- lo calculan los triggers: precio_compra + 40%
     activo         BOOLEAN       NOT NULL DEFAULT TRUE -- baja lógica: FALSE = no se vende más
 );
 

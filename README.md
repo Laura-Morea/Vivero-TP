@@ -97,7 +97,9 @@ mysql --force -vvv -t -u <usuario> -p < queries.sql
   impide que un producto sea planta e insumo a la vez.
 - **Precios históricos.** Cada detalle de venta o de compra guarda el precio
   unitario de ese momento. `producto.precio_compra` refleja la última compra
-  y queda en `NULL` mientras el producto no tenga compras.
+  y queda en 0 mientras el producto no tenga compras. `precio_venta` lo
+  calcula un trigger como el último precio de compra + 40%, y cada detalle
+  de venta toma ese precio como `precio_unitario`.
 - **Un producto por renglón.** Los detalles tienen PK propia, pero
   `(id_venta, id_producto)` y `(id_compra, id_producto)` son `UNIQUE`: si se
   llevan más unidades, se aumenta la cantidad.

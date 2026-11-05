@@ -8,6 +8,8 @@
 --   * subtotal de cada detalle (cantidad * precio_unitario)
 --   * total_facturado de venta y de compra
 --   * stock: las compras suman, las ventas restan
+--   * precio_venta = último precio de compra + 40%; cada detalle de venta
+--     toma el precio_venta vigente como precio_unitario
 --   * no se vende sin stock ni un producto dado de baja
 --   * borrar una venta o compra ajusta el stock (la cascada a los
 --     detalles no dispara sus triggers)
@@ -152,7 +154,8 @@ BEGIN
     -- suma stock y deja el precio de esta compra como último precio de compra
     UPDATE producto
        SET cantidad_stock = cantidad_stock + NEW.cantidad,
-           precio_compra  = NEW.precio_unitario
+           precio_compra  = NEW.precio_unitario,
+           precio_venta = NEW.precio_unitario * 1.40
      WHERE id_producto = NEW.id_producto;
 
     UPDATE compra
@@ -181,7 +184,8 @@ BEGIN
     -- y, si se corrigió el precio, lo toma como último precio de compra
     UPDATE producto
        SET cantidad_stock = cantidad_stock + (NEW.cantidad - OLD.cantidad),
-           precio_compra  = NEW.precio_unitario
+           precio_compra  = NEW.precio_unitario,
+           precio_venta = NEW.precio_unitario * 1.40
      WHERE id_producto = NEW.id_producto;
 
     UPDATE compra
@@ -215,8 +219,9 @@ FOR EACH ROW
 BEGIN
     DECLARE v_stock  INT;
     DECLARE v_activo BOOLEAN;
+    DECLARE v_precio DECIMAL(10,2);
 
-    SELECT cantidad_stock, activo INTO v_stock, v_activo
+    SELECT cantidad_stock, activo, precio_venta INTO v_stock, v_activo, v_precio
       FROM producto WHERE id_producto = NEW.id_producto;
 
     IF NOT v_activo THEN
@@ -229,7 +234,9 @@ BEGIN
             SET MESSAGE_TEXT = 'Stock insuficiente para el producto';
     END IF;
 
-    SET NEW.subtotal = NEW.cantidad * NEW.precio_unitario;
+    SET NEW.precio_unitario = v_precio;
+
+    SET NEW.subtotal = NEW.cantidad * v_precio;
 END$$
 
 CREATE TRIGGER trg_detalle_venta_ai
@@ -252,9 +259,9 @@ FOR EACH ROW
 BEGIN
     DECLARE v_stock INT;
 
-    IF NEW.id_venta <> OLD.id_venta OR NEW.id_producto <> OLD.id_producto THEN
+    IF NEW.id_venta <> OLD.id_venta OR NEW.id_producto <> OLD.id_producto OR NEW.precio_unitario <> OLD.precio_unitario THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'No se puede cambiar la venta ni el producto de un detalle; borrá el detalle y creá uno nuevo';
+            SET MESSAGE_TEXT = 'No se puede cambiar la venta ni el producto o su precio de un detalle; borrá el detalle y creá uno nuevo';
     END IF;
 
     SELECT cantidad_stock INTO v_stock

@@ -213,8 +213,9 @@ START TRANSACTION;
 -- 	   (producto, cantidad y precio unitario).
 --     Resultado esperado: El subtotal se calcula como  
 -- 	   cantidad × precio_unitario. El stock del producto  
--- 	   aumenta en la cantidad comprada y su precio_compra
--- 	   pasa a ser el precio unitario. El total_facturado 
+-- 	   aumenta en la cantidad comprada, su precio_compra
+-- 	   pasa a ser el precio unitario y su precio_venta pasa
+-- 	   a ser precio unitario × 1.40. El total_facturado 
 -- 	   de la compra se recalcula.
 -- -----------------------------------------------------
 INSERT INTO compra (fecha, forma_de_pago, id_proveedor) VALUE (CURRENT_DATE(), 'efectivo', 3);
@@ -223,16 +224,17 @@ INSERT INTO detalle_compra (id_compra, id_producto, cantidad, precio_unitario) V
     
 -- -----------------------------------------------------
 -- P2. Registrar una venta con dos filas de detalle_venta.
---     Resultado esperado: El subtotal de cada fila se 
--- 	   calcula como cantidad × precio_unitario. El stock 
+--     Resultado esperado: El precio_unitario de cada fila
+-- 	   se toma del precio_venta del producto y el subtotal
+-- 	   se calcula como cantidad × precio_unitario. El stock 
 -- 	   de cada producto disminuye en la cantidad vendida 
 -- 	   y el total_facturado de la venta es la suma de los 
 -- 	   subtotales.
 -- -----------------------------------------------------
 INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUE (CURRENT_DATE(), 'crédito', 4, 1);
 SET @venta = LAST_INSERT_ID();
-INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario) VALUES 
-			(@venta, 10,  10,  1000.00), (@venta, 16, 2, 6500.00);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad) VALUES 
+			(@venta, 10, 10), (@venta, 16, 2);
 
 -- -----------------------------------------------------
 -- P3. Borrar una venta completa.
@@ -249,16 +251,16 @@ DELETE FROM venta WHERE id_venta = @venta;
 -- 	   base con su historial y deja de poder venderse.
 -- -----------------------------------------------------
 UPDATE producto SET activo = 0 WHERE id_producto = 14; 
-INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario)
-	VALUE (16, 14, 1, 4500.00);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad)
+	VALUE (16, 14, 1);
 
 
 -- -----------------------------------------------------
 -- N1. Vender más unidades que el stock disponible
 --     Error esperado: 'Stock insuficiente para el producto' (trg_detalle_venta_bi)
 -- -----------------------------------------------------
-INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario)
-	VALUES (1, 5, 100, 22000.00);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad)
+	VALUES (1, 5, 100);
 
 -- -----------------------------------------------------
 -- N2. Aumentar la cantidad de un detalle de venta por encima del stock
@@ -276,15 +278,15 @@ UPDATE detalle_venta SET id_producto = 2 WHERE id_venta = 1 AND id_producto = 1;
 -- N4. Vender un producto dado de baja
 --     Error esperado: 'El producto está dado de baja' (trg_detalle_venta_bi)
 -- -----------------------------------------------------
-INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario)
-VALUES (1, 20, 1, 1200.00);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad)
+VALUES (1, 20, 1);
 
 -- -----------------------------------------------------
 -- N5. Repetir un producto dentro de la misma venta
 --     Error esperado: 'Duplicate entry' en uq_dventa_venta_producto
 -- -----------------------------------------------------
-INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario)
-VALUES (1, 1, 1, 3500.00);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad)
+VALUES (1, 1, 1);
 
 -- -----------------------------------------------------
 -- N6. Anular un renglón de compra cuyo stock ya se vendió
@@ -335,8 +337,8 @@ UPDATE producto SET precio_venta = -100 WHERE id_producto = 1;
 -- N13. Detalle de venta con cantidad 0
 --      Error esperado: CHECK 'chk_dventa_cantidad'
 -- -----------------------------------------------------
-INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario)
-VALUES (1, 2, 0, 4800.00);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad)
+VALUES (1, 2, 0);
 
 -- -----------------------------------------------------
 -- N14. Forma de pago fuera de las permitidas
