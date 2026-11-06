@@ -15,7 +15,7 @@ etc.) quedan fuera del alcance.
 ## Estructura
 
 ```
-Informe.docx                      Especificaciones técnicas (informe de la entrega)
+Informe.docx / .pdf               Especificaciones técnicas (informe de la entrega)
 Diagramas/
   DER_Vivero.drawio / .png        Diagrama entidad-relación (modelo conceptual)
   EER_tablas_Vivero.drawio / .png Modelo lógico: tablas, columnas, claves y relaciones
@@ -25,7 +25,8 @@ Scripts/
   indices.sql                     Índices para búsquedas y reportes
   triggers.sql                    Stock, totales y validaciones de negocio
   datos.sql                       Datos de prueba
-  queries.sql                     Consultas de prueba y pruebas negativas
+  queries.sql                     Consultas, pruebas positivas y pruebas negativas
+Tablas csv/                       Contenido de cada tabla tras cargar datos.sql (al 06/11/2026)
 ```
 
 El informe, los diagramas y los scripts describen el mismo modelo. Si se cambia
@@ -50,7 +51,11 @@ si ya existe**):
 schema.sql → integridad_referencial.sql → indices.sql → triggers.sql → datos.sql
 ```
 
-Los datos van al final porque los triggers son los que calculan el stock y los totales.
+Los datos van al final porque los triggers son los que calculan el stock, los
+precios de venta y los totales. Dentro de `datos.sql`, las compras y las ventas
+se cargan intercaladas en orden cronológico: cada venta cobra el precio vigente
+a su fecha. Las fechas son relativas al día de la carga (`CURRENT_DATE -
+INTERVAL n DAY`), así que los reportes por período siempre tienen datos.
 
 ```sh
 cd Scripts
@@ -79,15 +84,23 @@ mysql --force -vvv -t -u <usuario> -p < queries.sql
 
 `-vvv -t` muestra cada sentencia junto con su resultado en forma de tabla.
 
-- **Consultas 1 a 12**: reportes de top de vendedores, productos y clientes,
-  producto más facturado por tipo, ventas por mes, formas de pago, stock
-  crítico, márgenes, compras por proveedor, productos sin ventas, detalle de
-  una venta e historial de compras por cliente.
+- **Consultas 1 a 12**: reportes sobre períodos cerrados, relativos al día en
+  que se ejecutan: mejor vendedor y formas de pago del mes anterior, top de
+  productos y clientes de los últimos 3 meses, planta e insumo más facturados,
+  ventas de los últimos 6 meses mes a mes, stock crítico con las ventas de los
+  últimos 30 días, márgenes del mes anterior, compras por proveedor, productos
+  sin ventas en los últimos 30 días, detalle de una venta e historial de
+  compras de un cliente.
+- **Pruebas positivas P1 a P4**: registrar una compra, registrar una venta,
+  borrar una venta y dar de baja un producto. El comentario de cada una indica
+  el resultado esperado (stock, precios, subtotales y totales). P4 termina con
+  un intento de venta del producto dado de baja, que **debe fallar**.
 - **Pruebas negativas N1 a N20**: cada sentencia **debe fallar**. El comentario
   de cada una indica qué restricción o trigger la frena; MySQL escribe el
   mensaje completo (por ejemplo `Check constraint 'chk_planta_riego' is violated.`).
-  Hace falta `--force` para que el cliente siga después de cada error. Van
-  dentro de una transacción que se deshace al final, así que no modifican los datos.
+  Hace falta `--force` para que el cliente siga después de cada error.
+- Las pruebas positivas y negativas van dentro de una transacción que se
+  deshace al final, así que no modifican los datos.
 
 ## Decisiones de diseño
 

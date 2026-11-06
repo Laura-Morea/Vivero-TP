@@ -1,7 +1,18 @@
 -- =====================================================
 -- Consultas de prueba (testers) - MySQL 8.0.16+
 -- Ejecutar sobre la base cargada con vivero_completo.sql.
--- Cada consulta indica qué valida o qué pregunta de negocio responde.
+-- Cada consulta indica qué pregunta de negocio responde y sobre qué
+-- período.
+--
+-- Períodos: los reportes se calculan sobre períodos cerrados relativos
+-- al día en que se ejecutan (mes anterior, últimos 3 meses, últimos 30
+-- días...). datos.sql carga las fechas también relativas a ese día, así
+-- que siempre hay datos en esos períodos.
+--   * Mes anterior:      fecha >  LAST_DAY(CURRENT_DATE - INTERVAL 2 MONTH)
+--                        fecha <= LAST_DAY(CURRENT_DATE - INTERVAL 1 MONTH)
+--   * Últimos 3 meses:   fecha >= CURRENT_DATE - INTERVAL 3 MONTH
+-- Los filtros comparan la columna fecha contra un rango, sin aplicarle
+-- funciones, para que MySQL pueda usar idx_venta_fecha / idx_compra_fecha.
 --
 -- El nombre de un producto está en su subtipo (planta o insumo), por eso
 -- varias consultas hacen LEFT JOIN a ambas tablas y toman el que exista.
@@ -10,42 +21,48 @@
 USE vivero;
 
 -- -----------------------------------------------------
--- 1. Top 3 vendedores por facturación
+-- 1. Ranking de vendedores del mes anterior (el primero es el mejor
+--    vendedor del mes): cantidad de ventas y facturación
 -- -----------------------------------------------------
-SELECT ve.id_vendedor,
-       CONCAT(ve.apellido, ', ', ve.nombre) AS vendedor,
-       COUNT(v.id_venta)                    AS cantidad_ventas,
-       SUM(v.total_facturado)               AS total_facturado
+SELECT DATE_FORMAT(CURRENT_DATE - INTERVAL 1 MONTH, '%Y-%m') AS mes,
+       CONCAT(ve.apellido, ', ', ve.nombre)                  AS vendedor,
+       COUNT(v.id_venta)                                     AS cantidad_ventas,
+       SUM(v.total_facturado)                                AS total_facturado
   FROM vendedor ve
   JOIN venta v ON v.id_vendedor = ve.id_vendedor
+ WHERE v.fecha >  LAST_DAY(CURRENT_DATE - INTERVAL 2 MONTH)
+   AND v.fecha <= LAST_DAY(CURRENT_DATE - INTERVAL 1 MONTH)
  GROUP BY ve.id_vendedor, ve.apellido, ve.nombre
- ORDER BY total_facturado DESC
- LIMIT 3;
+ ORDER BY total_facturado DESC;
 
 -- -----------------------------------------------------
--- 2. Top 3 productos más vendidos por unidades
+-- 2. Top 5 productos más vendidos (por unidades) de los últimos 3 meses
 -- -----------------------------------------------------
 SELECT p.id_producto,
        COALESCE(pl.nombre, i.nombre) AS nombre,
        SUM(dv.cantidad)              AS unidades_vendidas,
        SUM(dv.subtotal)              AS facturado
-  FROM producto p
-  JOIN detalle_venta dv ON dv.id_producto = p.id_producto
+  FROM venta v
+  JOIN detalle_venta dv ON dv.id_venta    = v.id_venta
+  JOIN producto p       ON p.id_producto  = dv.id_producto
   LEFT JOIN planta pl   ON pl.id_producto = p.id_producto
   LEFT JOIN insumo i    ON i.id_producto  = p.id_producto
+ WHERE v.fecha >= CURRENT_DATE - INTERVAL 3 MONTH
  GROUP BY p.id_producto, pl.nombre, i.nombre
  ORDER BY unidades_vendidas DESC
- LIMIT 3;
+ LIMIT 5;
 
 -- -----------------------------------------------------
--- 3. Producto más facturado de cada tipo (planta, insumo)
+-- 3. Planta e insumo más facturados de los últimos 3 meses
 --    Una consulta por tipo, cada una con su primer puesto (LIMIT 1).
 -- -----------------------------------------------------
 (SELECT 'planta'         AS tipo,
         pl.nombre        AS nombre,
         SUM(dv.subtotal) AS facturado
-   FROM planta pl
-   JOIN detalle_venta dv ON dv.id_producto = pl.id_producto
+   FROM venta v
+   JOIN detalle_venta dv ON dv.id_venta    = v.id_venta
+   JOIN planta pl        ON pl.id_producto = dv.id_producto
+  WHERE v.fecha >= CURRENT_DATE - INTERVAL 3 MONTH
   GROUP BY pl.id_planta, pl.nombre
   ORDER BY facturado DESC
   LIMIT 1)
@@ -53,37 +70,49 @@ UNION ALL
 (SELECT 'insumo'         AS tipo,
         i.nombre         AS nombre,
         SUM(dv.subtotal) AS facturado
-   FROM insumo i
-   JOIN detalle_venta dv ON dv.id_producto = i.id_producto
+   FROM venta v
+   JOIN detalle_venta dv ON dv.id_venta   = v.id_venta
+   JOIN insumo i         ON i.id_producto = dv.id_producto
+  WHERE v.fecha >= CURRENT_DATE - INTERVAL 3 MONTH
   GROUP BY i.id_insumo, i.nombre
   ORDER BY facturado DESC
   LIMIT 1);
 
 -- -----------------------------------------------------
--- 4. Ventas mensuales: cantidad de ventas, total y ticket promedio (RF-05)
+-- 4. Ventas mensuales de los últimos 6 meses (incluye el mes en curso):
+--    cantidad de ventas, total y ticket promedio (RF-05)
 -- -----------------------------------------------------
 SELECT DATE_FORMAT(fecha, '%Y-%m')     AS mes,
        COUNT(*)                        AS cantidad_ventas,
        SUM(total_facturado)            AS total_facturado,
        ROUND(AVG(total_facturado), 2)  AS ticket_promedio
   FROM venta
+ WHERE fecha > LAST_DAY(CURRENT_DATE - INTERVAL 6 MONTH)
  GROUP BY mes
  ORDER BY mes;
 
 -- -----------------------------------------------------
--- 5. Facturación por forma de pago y su porcentaje sobre el total
+-- 5. Facturación del mes anterior por forma de pago y su porcentaje
+--    sobre el total de ese mes
 -- -----------------------------------------------------
 SELECT forma_de_pago,
        COUNT(*)             AS cantidad_ventas,
        SUM(total_facturado) AS total_facturado,
-       ROUND(100 * SUM(total_facturado) / (SELECT SUM(total_facturado) FROM venta), 2) AS porcentaje
+       ROUND(100 * SUM(total_facturado) /
+             (SELECT SUM(total_facturado)
+                FROM venta
+               WHERE fecha >  LAST_DAY(CURRENT_DATE - INTERVAL 2 MONTH)
+                 AND fecha <= LAST_DAY(CURRENT_DATE - INTERVAL 1 MONTH)), 2) AS porcentaje
   FROM venta
+ WHERE fecha >  LAST_DAY(CURRENT_DATE - INTERVAL 2 MONTH)
+   AND fecha <= LAST_DAY(CURRENT_DATE - INTERVAL 1 MONTH)
  GROUP BY forma_de_pago
  ORDER BY total_facturado DESC;
 
 -- -----------------------------------------------------
--- 6. Top 3 clientes identificados por monto comprado, y cuánto se
---    vendió a consumidor final (cliente 1)
+-- 6. Top 3 clientes identificados de los últimos 3 meses por monto
+--    comprado, y cuánto se vendió a consumidor final (cliente 1) en el
+--    mismo período
 -- -----------------------------------------------------
 (SELECT CONCAT(c.apellido, ', ', c.nombre) AS cliente,
         COUNT(v.id_venta)                  AS cantidad_ventas,
@@ -91,75 +120,101 @@ SELECT forma_de_pago,
    FROM cliente c
    JOIN venta v ON v.id_cliente = c.id_cliente
   WHERE c.id_cliente <> 1
+    AND v.fecha >= CURRENT_DATE - INTERVAL 3 MONTH
   GROUP BY c.id_cliente, c.apellido, c.nombre
   ORDER BY total_comprado DESC
   LIMIT 3)
 UNION ALL
 (SELECT 'Consumidor final', COUNT(*), SUM(total_facturado)
    FROM venta
-  WHERE id_cliente = 1);
+  WHERE id_cliente = 1
+    AND fecha >= CURRENT_DATE - INTERVAL 3 MONTH);
 
 -- -----------------------------------------------------
 -- 7. Alerta de stock crítico: productos activos por debajo de su
---    stock mínimo, con cuánto falta para llegar al mínimo (RF-05)
+--    stock mínimo, con cuánto falta para llegar al mínimo y cuánto se
+--    vendió en los últimos 30 días, para priorizar la reposición (RF-05)
 -- -----------------------------------------------------
 SELECT p.id_producto,
-       COALESCE(pl.nombre, i.nombre)      AS nombre,
+       COALESCE(pl.nombre, i.nombre)            AS nombre,
        p.cantidad_stock,
        p.stock_minimo,
-       p.stock_minimo - p.cantidad_stock  AS faltante
+       p.stock_minimo - p.cantidad_stock        AS faltante,
+       COALESCE(ult.unidades, 0)                AS vendido_ultimos_30_dias
   FROM producto p
   LEFT JOIN planta pl ON pl.id_producto = p.id_producto
   LEFT JOIN insumo i  ON i.id_producto  = p.id_producto
+  LEFT JOIN (SELECT dv.id_producto, SUM(dv.cantidad) AS unidades
+               FROM venta v
+               JOIN detalle_venta dv ON dv.id_venta = v.id_venta
+              WHERE v.fecha >= CURRENT_DATE - INTERVAL 30 DAY
+              GROUP BY dv.id_producto) ult ON ult.id_producto = p.id_producto
  WHERE p.activo = TRUE
    AND p.cantidad_stock < p.stock_minimo
- ORDER BY faltante DESC;
+ ORDER BY vendido_ultimos_30_dias DESC, faltante DESC;
 
 -- -----------------------------------------------------
--- 8. Margen por producto vendido (precio cobrado vs. precio de compra vigente)
+-- 8. Margen por producto vendido en el mes anterior (precio cobrado vs.
+--    precio de compra vigente)
 -- -----------------------------------------------------
-SELECT COALESCE(pl.nombre, i.nombre)                        AS nombre,
-       SUM(dv.cantidad)                                     AS unidades,
-       SUM(dv.subtotal)                                     AS facturado,
-       SUM(dv.cantidad * p.precio_compra)                   AS costo,
+SELECT COALESCE(pl.nombre, i.nombre)                         AS nombre,
+       SUM(dv.cantidad)                                      AS unidades,
+       SUM(dv.subtotal)                                      AS facturado,
+       SUM(dv.cantidad * p.precio_compra)                    AS costo,
        SUM(dv.subtotal) - SUM(dv.cantidad * p.precio_compra) AS margen,
        ROUND(100 * (SUM(dv.subtotal) - SUM(dv.cantidad * p.precio_compra))
-                 / SUM(dv.subtotal), 2)                     AS margen_pct
-  FROM producto p
-  JOIN detalle_venta dv ON dv.id_producto = p.id_producto
+                 / SUM(dv.subtotal), 2)                      AS margen_pct
+  FROM venta v
+  JOIN detalle_venta dv ON dv.id_venta    = v.id_venta
+  JOIN producto p       ON p.id_producto  = dv.id_producto
   LEFT JOIN planta pl   ON pl.id_producto = p.id_producto
   LEFT JOIN insumo i    ON i.id_producto  = p.id_producto
+ WHERE v.fecha >  LAST_DAY(CURRENT_DATE - INTERVAL 2 MONTH)
+   AND v.fecha <= LAST_DAY(CURRENT_DATE - INTERVAL 1 MONTH)
  GROUP BY p.id_producto, pl.nombre, i.nombre
  ORDER BY margen DESC;
 
 -- -----------------------------------------------------
--- 9. Compras por proveedor
+-- 9. Compras a cada proveedor en los últimos 3 meses (los proveedores
+--    sin compras en el período aparecen con 0)
 -- -----------------------------------------------------
 SELECT pr.nombre_empresa,
        pr.cuit,
-       COUNT(c.id_compra)     AS cantidad_compras,
-       SUM(c.total_facturado) AS total_comprado,
-       MAX(c.fecha)           AS ultima_compra
+       COUNT(c.id_compra)                 AS cantidad_compras,
+       COALESCE(SUM(c.total_facturado), 0) AS total_comprado,
+       MAX(c.fecha)                       AS ultima_compra
   FROM proveedor pr
   LEFT JOIN compra c ON c.id_proveedor = pr.id_proveedor
+                    AND c.fecha >= CURRENT_DATE - INTERVAL 3 MONTH
  GROUP BY pr.id_proveedor, pr.nombre_empresa, pr.cuit
  ORDER BY total_comprado DESC;
 
 -- -----------------------------------------------------
--- 10. Productos que nunca se vendieron
+-- 10. Productos activos con stock que no se vendieron en los últimos
+--     30 días (mercadería inmovilizada), con la fecha de su última venta
 -- -----------------------------------------------------
 SELECT p.id_producto,
        COALESCE(pl.nombre, i.nombre) AS nombre,
        p.cantidad_stock,
-       p.activo
+       (SELECT MAX(v.fecha)
+          FROM venta v
+          JOIN detalle_venta dv ON dv.id_venta = v.id_venta
+         WHERE dv.id_producto = p.id_producto) AS ultima_venta
   FROM producto p
   LEFT JOIN planta pl ON pl.id_producto = p.id_producto
   LEFT JOIN insumo i  ON i.id_producto  = p.id_producto
- WHERE NOT EXISTS (SELECT 1 FROM detalle_venta dv WHERE dv.id_producto = p.id_producto)
- ORDER BY nombre;
+ WHERE p.activo = TRUE
+   AND p.cantidad_stock > 0
+   AND NOT EXISTS (SELECT 1
+                     FROM venta v
+                     JOIN detalle_venta dv ON dv.id_venta = v.id_venta
+                    WHERE dv.id_producto = p.id_producto
+                      AND v.fecha >= CURRENT_DATE - INTERVAL 30 DAY)
+ ORDER BY ultima_venta, nombre;
 
 -- -----------------------------------------------------
 -- 11. Detalle de una venta (como se imprimiría el ticket)
+--     Se busca por número de venta, como al reimprimir un ticket.
 -- -----------------------------------------------------
 SELECT v.id_venta,
        v.fecha,
@@ -176,10 +231,10 @@ SELECT v.id_venta,
   JOIN detalle_venta dv ON dv.id_venta    = v.id_venta
   LEFT JOIN planta pl   ON pl.id_producto = dv.id_producto
   LEFT JOIN insumo i    ON i.id_producto  = dv.id_producto
- WHERE v.id_venta = 3;
+ WHERE v.id_venta = 6;
 
 -- -----------------------------------------------------
--- 12. Historial de compras de un cliente (RF-05)
+-- 12. Historial de compras de un cliente en los últimos 6 meses (RF-05)
 -- -----------------------------------------------------
 SELECT v.fecha,
        v.id_venta,
@@ -192,6 +247,7 @@ SELECT v.fecha,
   LEFT JOIN planta pl   ON pl.id_producto = dv.id_producto
   LEFT JOIN insumo i    ON i.id_producto  = dv.id_producto
  WHERE v.id_cliente = 2
+   AND v.fecha >= CURRENT_DATE - INTERVAL 6 MONTH
  ORDER BY v.fecha, v.id_venta;
 
 
@@ -260,33 +316,33 @@ INSERT INTO detalle_venta (id_venta, id_producto, cantidad)
 --     Error esperado: 'Stock insuficiente para el producto' (trg_detalle_venta_bi)
 -- -----------------------------------------------------
 INSERT INTO detalle_venta (id_venta, id_producto, cantidad)
-	VALUES (1, 5, 100);
+	VALUES (4, 5, 100);
 
 -- -----------------------------------------------------
 -- N2. Aumentar la cantidad de un detalle de venta por encima del stock
 --     Error esperado: 'Stock insuficiente para el producto' (trg_detalle_venta_bu)
 -- -----------------------------------------------------
-UPDATE detalle_venta SET cantidad = 500 WHERE id_venta = 4 AND id_producto = 5;
+UPDATE detalle_venta SET cantidad = 500 WHERE id_venta = 1 AND id_producto = 5;
 
 -- -----------------------------------------------------
 -- N3. Cambiar el producto de un detalle ya cargado
---     Error esperado: 'No se puede cambiar la venta ni el producto...' (trg_detalle_venta_bu)
+--     Error esperado: 'No se puede cambiar la venta ni el producto o su precio...' (trg_detalle_venta_bu)
 -- -----------------------------------------------------
-UPDATE detalle_venta SET id_producto = 2 WHERE id_venta = 1 AND id_producto = 1;
+UPDATE detalle_venta SET id_producto = 2 WHERE id_venta = 4 AND id_producto = 1;
 
 -- -----------------------------------------------------
 -- N4. Vender un producto dado de baja
 --     Error esperado: 'El producto está dado de baja' (trg_detalle_venta_bi)
 -- -----------------------------------------------------
 INSERT INTO detalle_venta (id_venta, id_producto, cantidad)
-VALUES (1, 20, 1);
+VALUES (4, 20, 1);
 
 -- -----------------------------------------------------
 -- N5. Repetir un producto dentro de la misma venta
 --     Error esperado: 'Duplicate entry' en uq_dventa_venta_producto
 -- -----------------------------------------------------
 INSERT INTO detalle_venta (id_venta, id_producto, cantidad)
-VALUES (1, 1, 1);
+VALUES (4, 1, 1);
 
 -- -----------------------------------------------------
 -- N6. Anular un renglón de compra cuyo stock ya se vendió
@@ -338,7 +394,7 @@ UPDATE producto SET precio_venta = -100 WHERE id_producto = 1;
 --      Error esperado: CHECK 'chk_dventa_cantidad'
 -- -----------------------------------------------------
 INSERT INTO detalle_venta (id_venta, id_producto, cantidad)
-VALUES (1, 2, 0);
+VALUES (4, 2, 0);
 
 -- -----------------------------------------------------
 -- N14. Forma de pago fuera de las permitidas

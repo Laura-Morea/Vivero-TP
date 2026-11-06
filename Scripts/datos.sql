@@ -8,10 +8,15 @@
 -- tabla numera sus filas 1, 2, 3... en el orden en que se insertan; las
 -- FK de más abajo usan esos números, indicados en los comentarios.
 --
+-- Las fechas de compras y ventas son relativas al día en que se carga
+-- (CURRENT_DATE - INTERVAL n DAY): los datos cubren siempre los últimos
+-- tres meses, así las consultas por período (mes anterior, últimos 3
+-- meses, etc.) devuelven resultados sin importar cuándo se ejecuten.
+--
 -- Los productos se dan de alta con stock 0 y precios en 0: el stock,
 -- el precio_compra y el precio_venta vigentes y los totales los
--- completan los triggers al cargar las compras y las ventas. Por eso las compras van antes que las
--- ventas.
+-- completan los triggers al cargar las compras y las ventas. Por eso
+-- las compras y las ventas se cargan intercaladas en orden cronológico.
 -- =====================================================
 
 USE vivero;
@@ -106,76 +111,138 @@ INSERT INTO insumo (nombre, descripcion, id_producto) VALUES
     ('Maceta de barro n°12',     'Discontinuada por el proveedor',      20);
 
 -- -----------------------------------------------------
--- Compras (subtotal, total_facturado, stock y precio_compra los
--- actualizan los triggers)
+-- Compras y ventas, en orden cronológico
+-- Se cargan en el orden en que ocurrieron porque los triggers usan el
+-- estado del producto en ese momento: cada compra suma stock y fija
+-- precio_compra y precio_venta (+40%), y cada venta cobra el
+-- precio_venta vigente y descuenta stock. Subtotales y totales también
+-- los calculan los triggers.
+--   detalle_compra: (id_compra, id_producto, cantidad, precio_unitario)
+--   detalle_venta:  (id_venta, id_producto, cantidad)
+--   venta: id_cliente = 1 es el consumidor final
+-- Compras numeradas 1 a 8 y ventas 1 a 16, cada una en orden de fecha.
 -- -----------------------------------------------------
 
--- compras 1 a 8 (la última columna es el id_proveedor)
-INSERT INTO compra (fecha, forma_de_pago, id_proveedor) VALUES
-    ('2026-08-03', 'transferencia', 1),
-    ('2026-08-17', 'transferencia', 1),
-    ('2026-08-20', 'crédito',       2),
-    ('2026-09-01', 'transferencia', 3),
-    ('2026-09-10', 'efectivo',      4),
-    ('2026-09-28', 'transferencia', 1),
-    ('2026-10-05', 'débito',        2),
-    ('2026-10-12', 'efectivo',      4);
-
--- (id_compra, id_producto, cantidad, precio_unitario)
+-- compra 1 (Viveros del Delta)
+INSERT INTO compra (fecha, forma_de_pago, id_proveedor) VALUES (CURRENT_DATE - INTERVAL 95 DAY, 'transferencia', 1);
 INSERT INTO detalle_compra (id_compra, id_producto, cantidad, precio_unitario) VALUES
-    (1, 1,  30, 1500.00), (1, 2, 20, 2000.00), (1, 6, 15, 2500.00), (1, 7, 8, 7000.00), (1, 8, 12, 3000.00),
-    (2, 3,  25, 1800.00), (2, 4, 25, 1200.00), (2, 5,  6, 9000.00), (2, 9, 10, 4000.00),
-    (3, 11, 20, 6000.00), (3, 12, 15, 3500.00), (3, 15, 5, 8000.00), (3, 16, 10, 3000.00), (3, 17, 15, 1800.00),
-    (4, 13, 50,  600.00), (4, 14, 12, 4500.00), (4, 20, 10, 500.00),
-    (5, 10, 120, 400.00),
-    -- reposición con aumento de precio: actualiza precio_compra
-    (6, 1,  20, 1650.00), (6, 6, 10, 2700.00), (6, 7, 5, 7400.00),
-    -- productos nuevos (18 y 19) que todavía no tienen ventas
-    (6, 18,  6, 8500.00),
-    (7, 11, 15, 6400.00), (7, 12, 10, 3700.00), (7, 19, 20, 1200.00),
-    (8, 10, 80,  420.00);
+    (1, 1, 30, 1500.00), (1, 2, 20, 2000.00), (1, 6, 15, 2500.00), (1, 7, 8, 7000.00), (1, 8, 12, 3000.00);
 
--- -----------------------------------------------------
--- Ventas (subtotal, total_facturado y stock los actualizan los triggers)
--- id_cliente = 1: consumidor final
--- -----------------------------------------------------
+-- compra 2 (Viveros del Delta)
+INSERT INTO compra (fecha, forma_de_pago, id_proveedor) VALUES (CURRENT_DATE - INTERVAL 81 DAY, 'transferencia', 1);
+INSERT INTO detalle_compra (id_compra, id_producto, cantidad, precio_unitario) VALUES
+    (2, 3, 25, 1800.00), (2, 4, 25, 1200.00), (2, 5, 6, 9000.00), (2, 9, 10, 4000.00);
 
--- ventas 1 a 16 (las dos últimas columnas son id_cliente e id_vendedor)
-INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUES
-    ('2026-08-05', 'efectivo',      2,  1),    -- 1
-    ('2026-08-06', 'efectivo',      1,  2),    -- 2
-    ('2026-08-12', 'débito',        3,  1),    -- 3
-    ('2026-08-21', 'crédito',       4,  3),    -- 4
-    ('2026-08-25', 'transferencia', 5,  2),    -- 5
-    ('2026-09-02', 'efectivo',      1,  4),    -- 6
-    ('2026-09-05', 'débito',        6,  1),    -- 7
-    ('2026-09-12', 'crédito',       7,  3),    -- 8
-    ('2026-09-18', 'débito',        2,  2),    -- 9
-    ('2026-09-21', 'efectivo',      1,  4),    -- 10
-    ('2026-09-30', 'transferencia', 8,  1),    -- 11
-    ('2026-10-03', 'transferencia', 9,  3),    -- 12
-    ('2026-10-08', 'débito',        3,  2),    -- 13
-    ('2026-10-14', 'efectivo',      1,  1),    -- 14
-    ('2026-10-18', 'crédito',       10, 4),    -- 15
-    ('2026-10-20', 'transferencia', 11, 3);    -- 16
+-- compra 3 (Agroinsumos Pampa)
+INSERT INTO compra (fecha, forma_de_pago, id_proveedor) VALUES (CURRENT_DATE - INTERVAL 78 DAY, 'crédito', 2);
+INSERT INTO detalle_compra (id_compra, id_producto, cantidad, precio_unitario) VALUES
+    (3, 11, 20, 6000.00), (3, 12, 15, 3500.00), (3, 15, 5, 8000.00), (3, 16, 10, 3000.00), (3, 17, 15, 1800.00);
 
--- (id_venta, id_producto, cantidad)
+-- venta 1
+INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUES (CURRENT_DATE - INTERVAL 77 DAY, 'crédito', 4, 3);
 INSERT INTO detalle_venta (id_venta, id_producto, cantidad) VALUES
-    (1,  1,  3), 
-    (1, 13, 3),
-    (2,  10, 12),
-    (3,  7,  1), 
-    (3, 14, 1), (3, 11, 1),
-    (4,  5,  2), (4, 12, 1),
-    (5,  9,  3), (5, 11, 2),
-    (6,  3,  2), (6, 4, 2),
-    (7,  6,  2), (7, 8, 1), (7, 13, 3),
-    (8,  5,  1), (8, 15, 1),
-    (9,  2,  2), (9, 17, 1),
-    (10, 10, 24),
-    (11, 16, 2), (11, 12, 2),
-    (12, 7,  2), (12, 11, 2),
-    (13, 9,  2), (13, 17, 2),
-    (14, 1,  5), (14, 13, 5),
-    (15, 8,  2), (15, 14, 2), (15, 6, 1),
-    (16, 8,  1), (16, 12, 1);
+    (1, 5, 2), (1, 12, 1);
+
+-- venta 2
+INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUES (CURRENT_DATE - INTERVAL 73 DAY, 'transferencia', 5, 2);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad) VALUES
+    (2, 9, 3), (2, 11, 2);
+
+-- compra 4 (Cerámicas Litoral)
+INSERT INTO compra (fecha, forma_de_pago, id_proveedor) VALUES (CURRENT_DATE - INTERVAL 66 DAY, 'transferencia', 3);
+INSERT INTO detalle_compra (id_compra, id_producto, cantidad, precio_unitario) VALUES
+    (4, 13, 50, 600.00), (4, 14, 12, 4500.00), (4, 20, 10, 500.00);
+
+-- venta 3 (consumidor final)
+INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUES (CURRENT_DATE - INTERVAL 65 DAY, 'efectivo', 1, 4);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad) VALUES
+    (3, 3, 2), (3, 4, 2);
+
+-- venta 4
+INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUES (CURRENT_DATE - INTERVAL 64 DAY, 'efectivo', 2, 1);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad) VALUES
+    (4, 1, 3), (4, 13, 3);
+
+-- venta 5
+INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUES (CURRENT_DATE - INTERVAL 62 DAY, 'débito', 6, 1);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad) VALUES
+    (5, 6, 2), (5, 8, 1), (5, 13, 3);
+
+-- venta 6
+INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUES (CURRENT_DATE - INTERVAL 59 DAY, 'débito', 3, 1);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad) VALUES
+    (6, 7, 1), (6, 14, 1), (6, 11, 1);
+
+-- compra 5 (Semillería Norte)
+INSERT INTO compra (fecha, forma_de_pago, id_proveedor) VALUES (CURRENT_DATE - INTERVAL 57 DAY, 'efectivo', 4);
+INSERT INTO detalle_compra (id_compra, id_producto, cantidad, precio_unitario) VALUES
+    (5, 10, 120, 400.00);
+
+-- venta 7
+INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUES (CURRENT_DATE - INTERVAL 55 DAY, 'crédito', 7, 3);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad) VALUES
+    (7, 5, 1), (7, 15, 1);
+
+-- venta 8 (consumidor final)
+INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUES (CURRENT_DATE - INTERVAL 52 DAY, 'efectivo', 1, 2);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad) VALUES
+    (8, 10, 12);
+
+-- venta 9
+INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUES (CURRENT_DATE - INTERVAL 49 DAY, 'débito', 2, 2);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad) VALUES
+    (9, 2, 2), (9, 17, 1);
+
+-- venta 10 (consumidor final)
+INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUES (CURRENT_DATE - INTERVAL 46 DAY, 'efectivo', 1, 4);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad) VALUES
+    (10, 10, 24);
+
+-- compra 6 (Viveros del Delta)
+-- reposición con aumento de precio (1, 6 y 7): sube su precio_venta;
+-- el 18 es nuevo y todavía no tiene ventas
+INSERT INTO compra (fecha, forma_de_pago, id_proveedor) VALUES (CURRENT_DATE - INTERVAL 39 DAY, 'transferencia', 1);
+INSERT INTO detalle_compra (id_compra, id_producto, cantidad, precio_unitario) VALUES
+    (6, 1, 20, 1650.00), (6, 6, 10, 2700.00), (6, 7, 5, 7400.00), (6, 18, 6, 8500.00);
+
+-- venta 11
+INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUES (CURRENT_DATE - INTERVAL 37 DAY, 'transferencia', 8, 1);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad) VALUES
+    (11, 16, 2), (11, 12, 2);
+
+-- venta 12
+INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUES (CURRENT_DATE - INTERVAL 34 DAY, 'transferencia', 9, 3);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad) VALUES
+    (12, 7, 2), (12, 11, 2);
+
+-- compra 7 (Agroinsumos Pampa)
+-- aumento de precio del 11 y el 12; el 19 es nuevo y no tiene ventas
+INSERT INTO compra (fecha, forma_de_pago, id_proveedor) VALUES (CURRENT_DATE - INTERVAL 32 DAY, 'débito', 2);
+INSERT INTO detalle_compra (id_compra, id_producto, cantidad, precio_unitario) VALUES
+    (7, 11, 15, 6400.00), (7, 12, 10, 3700.00), (7, 19, 20, 1200.00);
+
+-- venta 13
+INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUES (CURRENT_DATE - INTERVAL 29 DAY, 'débito', 3, 2);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad) VALUES
+    (13, 9, 2), (13, 17, 2);
+
+-- compra 8 (Semillería Norte)
+-- reposición de petunias con aumento de precio
+INSERT INTO compra (fecha, forma_de_pago, id_proveedor) VALUES (CURRENT_DATE - INTERVAL 25 DAY, 'efectivo', 4);
+INSERT INTO detalle_compra (id_compra, id_producto, cantidad, precio_unitario) VALUES
+    (8, 10, 80, 420.00);
+
+-- venta 14 (consumidor final)
+INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUES (CURRENT_DATE - INTERVAL 23 DAY, 'efectivo', 1, 1);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad) VALUES
+    (14, 1, 5), (14, 13, 5);
+
+-- venta 15
+INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUES (CURRENT_DATE - INTERVAL 19 DAY, 'crédito', 10, 4);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad) VALUES
+    (15, 8, 2), (15, 14, 2), (15, 6, 1);
+
+-- venta 16
+INSERT INTO venta (fecha, forma_de_pago, id_cliente, id_vendedor) VALUES (CURRENT_DATE - INTERVAL 17 DAY, 'transferencia', 11, 3);
+INSERT INTO detalle_venta (id_venta, id_producto, cantidad) VALUES
+    (16, 8, 1), (16, 12, 1);
